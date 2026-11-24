@@ -40,7 +40,7 @@ export function ActiveBadge({ active }: { active: boolean }) {
         active ? 'bg-emerald-600 text-white' : 'bg-zinc-500 text-white',
       )}
     >
-      {active ? 'Active' : 'Inactive'}
+      {active ? 'Ativo' : 'Inativo'}
     </span>
   )
 }

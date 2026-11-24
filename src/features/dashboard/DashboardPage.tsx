@@ -20,24 +20,24 @@ export function DashboardPage() {
   }, [])
 
   if (!data) {
-    return <p className="text-muted-foreground">Loading dashboard…</p>
+    return <p className="text-muted-foreground">Carregando painel…</p>
   }
 
   const cards = [
-    { label: 'Active', value: data.activeCount, href: '/equipment' },
-    { label: 'In use', value: data.inUse, href: '/equipment?status=in_use' },
+    { label: 'Ativos', value: data.activeCount, href: '/equipment' },
+    { label: 'Em uso', value: data.inUse, href: '/equipment?status=in_use' },
     {
-      label: 'In stock',
+      label: 'Em estoque',
       value: data.inStock,
       href: '/equipment?status=in_stock',
     },
     {
-      label: 'In maintenance',
+      label: 'Em manutenção',
       value: data.inMaintenance,
       href: '/equipment?status=in_maintenance',
     },
     {
-      label: 'Written off',
+      label: 'Baixados',
       value: data.writtenOff,
       href: '/equipment?status=written_off',
     },
@@ -46,8 +46,8 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">Overview of IT assets</p>
+        <h2 className="text-2xl font-semibold tracking-tight">Painel</h2>
+        <p className="text-muted-foreground">Visão geral do patrimônio de informática</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -73,7 +73,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total value (not written off)
+              Valor total (não baixados)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -84,7 +84,7 @@ export function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <ListCard
-          title="Expired warranties"
+          title="Garantias vencidas"
           empty={data.expiredWarranties.length === 0}
         >
           {data.expiredWarranties.map((item) => (
@@ -95,7 +95,7 @@ export function DashboardPage() {
         </ListCard>
 
         <ListCard
-          title="Warranties due within 30 days"
+          title="Garantias a vencer em 30 dias"
           empty={data.warrantiesDueSoon.length === 0}
         >
           {data.warrantiesDueSoon.map((item) => (
@@ -106,7 +106,7 @@ export function DashboardPage() {
         </ListCard>
 
         <ListCard
-          title="Regular maintenance due"
+          title="Manutenção regular a fazer"
           empty={data.overdueRegularMaintenance.length === 0}
         >
           {data.overdueRegularMaintenance.map((item) => {
@@ -125,7 +125,7 @@ export function DashboardPage() {
         </ListCard>
 
         <ListCard
-          title="Open maintenance"
+          title="Manutenções abertas"
           empty={data.openMaintenance.length === 0}
         >
           {data.openMaintenance.map((item) => (
@@ -140,7 +140,7 @@ export function DashboardPage() {
         </ListCard>
 
         <ListCard
-          title="Latest transfers"
+          title="Últimas movimentações"
           empty={data.recentTransfers.length === 0}
         >
           {data.recentTransfers.map((item) => (
@@ -149,7 +149,7 @@ export function DashboardPage() {
               to={`/equipment/${item.equipmentId}`}
               className="block hover:underline"
             >
-              {item.equipmentAssetTag} · {item.fromSectorName ?? 'Registration'} →{' '}
+              {item.equipmentAssetTag} · {item.fromSectorName ?? 'Cadastro'} →{' '}
               {item.toSectorName} · {formatDate(item.transferredOn)}
             </Link>
           ))}
@@ -174,7 +174,7 @@ function ListCard({
         <CardTitle className="text-base">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
-        {empty ? <EmptyState title="No records." /> : children}
+        {empty ? <EmptyState title="Nenhum registro." /> : children}
       </CardContent>
     </Card>
   )

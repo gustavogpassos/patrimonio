@@ -8,7 +8,7 @@ const optionalText = (max: number) =>
       const t = v.trim()
       return t.length === 0 ? null : t
     })
-    .refine((v) => v == null || v.length <= max, { message: `At most ${max} characters` })
+    .refine((v) => v == null || v.length <= max, { message: `Máximo de ${max} caracteres` })
 
 const requiredText = (min: number, max: number) =>
   z
@@ -18,7 +18,7 @@ const requiredText = (min: number, max: number) =>
 
 const dateString = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida')
 
 const optionalDate = z
   .union([z.string(), z.null(), z.undefined()])
@@ -28,7 +28,7 @@ const optionalDate = z
     return t.length === 0 ? null : t
   })
   .refine((v) => v == null || /^\d{4}-\d{2}-\d{2}$/.test(v), {
-    message: 'Invalid date',
+    message: 'Data inválida',
   })
 
 export const sectorSchema = z.object({

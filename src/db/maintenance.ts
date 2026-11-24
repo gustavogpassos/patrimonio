@@ -136,7 +136,7 @@ function getMaintenance(id: number): Maintenance {
        WHERE m.id = ?`,
     )
     .get(id)
-  if (!row) throw new AppError('Maintenance not found.')
+  if (!row) throw new AppError('Manutenção não encontrada.')
   return mapRow(row)
 }
 
@@ -145,13 +145,13 @@ export function openMaintenance(input: OpenMaintenanceInput): Maintenance {
     const db = getDb()
     const equipment = getEquipment(input.equipmentId)
     if (equipment.status === 'written_off') {
-      throw new AppError('Written-off equipment cannot open maintenance.')
+      throw new AppError('Equipamento baixado não pode abrir manutenção.')
     }
     if (equipment.hasOpenMaintenance) {
-      throw new AppError('This equipment already has an open maintenance order.')
+      throw new AppError('Este equipamento já possui uma manutenção aberta.')
     }
     if (isFutureDate(input.openedOn)) {
-      throw new AppError('Open date cannot be in the future.')
+      throw new AppError('Data de abertura não pode ser futura.')
     }
 
     const tx = db.transaction(() => {
@@ -192,20 +192,20 @@ export function completeMaintenance(
     const db = getDb()
     const record = getMaintenance(id)
     if (record.state !== 'open') {
-      throw new AppError('Only open maintenance can be completed.')
+      throw new AppError('Somente manutenções abertas podem ser concluídas.')
     }
     if (isFutureDate(input.completedOn)) {
-      throw new AppError('Completion date cannot be in the future.')
+      throw new AppError('Data de conclusão não pode ser futura.')
     }
     if (isBefore(input.completedOn, record.openedOn)) {
-      throw new AppError('Completion cannot be before the opening date.')
+      throw new AppError('Conclusão não pode ser anterior à abertura.')
     }
 
     let writeOffReason: string | null = null
     if (input.equipmentStatusAfter === 'written_off') {
       const reason = (input.writeOffReason ?? '').trim()
       if (reason.length < 3) {
-        throw new AppError('Enter the write-off reason (at least 3 characters).')
+        throw new AppError('Informe o motivo da baixa (mínimo 3 caracteres).')
       }
       writeOffReason = reason
     }
@@ -261,7 +261,7 @@ export function cancelMaintenance(
     const db = getDb()
     const record = getMaintenance(id)
     if (record.state !== 'open') {
-      throw new AppError('Only open maintenance can be cancelled.')
+      throw new AppError('Somente manutenções abertas podem ser canceladas.')
     }
 
     const restoredStatus =

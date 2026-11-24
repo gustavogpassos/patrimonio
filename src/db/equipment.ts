@@ -100,7 +100,7 @@ export function mapEquipment(row: EquipRow): EquipmentListItem {
 
 function assertNotFuture(date: string, label: string) {
   if (isFutureDate(date)) {
-    throw new AppError(`${label} cannot be in the future.`)
+    throw new AppError(`${label} não pode ser futura.`)
   }
 }
 
@@ -296,7 +296,7 @@ export function getEquipment(id: number): EquipmentDetail {
     const row = db
       .query<EquipRow, [number]>(`${EQUIPMENT_SELECT} WHERE e.id = ?`)
       .get(id)
-    if (!row) throw new AppError('Equipment not found.')
+    if (!row) throw new AppError('Equipamento não encontrado.')
     const maintenance = listEquipmentMaintenance(id)
     return {
       ...mapEquipment(row),
@@ -312,8 +312,8 @@ function assertActiveCategory(id: number) {
   const row = db
     .query<{ active: number }, [number]>('SELECT active FROM categories WHERE id = ?')
     .get(id)
-  if (!row) throw new AppError('Category not found.')
-  if (row.active !== 1) throw new AppError('Select an active category.')
+  if (!row) throw new AppError('Categoria não encontrada.')
+  if (row.active !== 1) throw new AppError('Selecione uma categoria ativa.')
 }
 
 function assertActiveSector(id: number) {
@@ -321,15 +321,15 @@ function assertActiveSector(id: number) {
   const row = db
     .query<{ active: number }, [number]>('SELECT active FROM sectors WHERE id = ?')
     .get(id)
-  if (!row) throw new AppError('Sector not found.')
-  if (row.active !== 1) throw new AppError('Select an active sector.')
+  if (!row) throw new AppError('Setor não encontrado.')
+  if (row.active !== 1) throw new AppError('Selecione um setor ativo.')
 }
 
 export function createEquipment(input: CreateEquipmentInput): EquipmentDetail {
   return wrapDb(() => {
     const db = getDb()
     if (input.status !== 'in_stock' && input.status !== 'in_use') {
-      throw new AppError('Registration only accepts In stock or In use.')
+      throw new AppError('Cadastro só aceita status Em estoque ou Em uso.')
     }
     assertActiveCategory(input.categoryId)
     assertActiveSector(input.sectorId)
@@ -338,7 +338,7 @@ export function createEquipment(input: CreateEquipmentInput): EquipmentDetail {
       input.acquiredOn && input.acquiredOn.length > 0
         ? input.acquiredOn
         : todayLocal()
-    assertNotFuture(transferDate, 'Acquisition date')
+    assertNotFuture(transferDate, 'Data de aquisição')
 
     const tx = db.transaction(() => {
       const result = db
@@ -374,7 +374,7 @@ export function createEquipment(input: CreateEquipmentInput): EquipmentDetail {
         `INSERT INTO transfers (
           equipment_id, from_sector_id, to_sector_id,
           from_location, to_location, reason, transferred_on, created_at
-        ) VALUES (?, NULL, ?, NULL, ?, 'Initial registration', ?, datetime('now','localtime'))`,
+        ) VALUES (?, NULL, ?, NULL, ?, 'Cadastro inicial', ?, datetime('now','localtime'))`,
       ).run(id, input.sectorId, nullIfEmpty(input.location), transferDate)
       return id
     })
@@ -391,7 +391,7 @@ export function updateEquipment(
   return wrapDb(() => {
     getEquipment(id)
     assertActiveCategory(input.categoryId)
-    if (input.acquiredOn) assertNotFuture(input.acquiredOn, 'Acquisition date')
+    if (input.acquiredOn) assertNotFuture(input.acquiredOn, 'Data de aquisição')
 
     const db = getDb()
     db.query(
@@ -430,19 +430,19 @@ export function transferEquipment(
     const db = getDb()
     const current = getEquipment(id)
     if (current.status === 'written_off') {
-      throw new AppError('Written-off equipment cannot be transferred.')
+      throw new AppError('Equipamento baixado não pode ser transferido.')
     }
     assertActiveSector(input.toSectorId)
-    assertNotFuture(input.transferredOn, 'Transfer date')
+    assertNotFuture(input.transferredOn, 'Data da movimentação')
 
     const toLocation = nullIfEmpty(input.toLocation)
     const sameSector = current.sectorId === input.toSectorId
     const sameLocation = (current.location ?? null) === (toLocation ?? null)
     if (sameSector && sameLocation) {
-      throw new AppError('Destination sector and location are the same as the current ones.')
+      throw new AppError('Setor e localização de destino são iguais aos atuais.')
     }
     if (current.acquiredOn && isBefore(input.transferredOn, current.acquiredOn)) {
-      throw new AppError('Transfer date cannot be before the acquisition date.')
+      throw new AppError('Data da movimentação não pode ser anterior à aquisição.')
     }
 
     const tx = db.transaction(() => {
@@ -476,14 +476,14 @@ export function writeOffEquipment(id: number, input: WriteOffInput): EquipmentDe
     const db = getDb()
     const current = getEquipment(id)
     if (current.status === 'written_off') {
-      throw new AppError('Equipment is already written off.')
+      throw new AppError('Equipamento já está baixado.')
     }
     if (current.hasOpenMaintenance) {
       throw new AppError(
-        'Complete or cancel the open maintenance before writing off the equipment.',
+        'Conclua ou cancele a manutenção aberta antes de baixar o equipamento.',
       )
     }
-    assertNotFuture(input.writtenOffOn, 'Write-off date')
+    assertNotFuture(input.writtenOffOn, 'Data da baixa')
 
     db.query(
       `UPDATE equipment
@@ -500,7 +500,7 @@ export function reactivateEquipment(id: number): EquipmentDetail {
     const db = getDb()
     const current = getEquipment(id)
     if (current.status !== 'written_off') {
-      throw new AppError('Only written-off equipment can be reactivated.')
+      throw new AppError('Somente equipamentos baixados podem ser reativados.')
     }
     db.query(
       `UPDATE equipment
@@ -517,7 +517,7 @@ export function deleteEquipment(id: number, assetTagConfirmation: string) {
     const db = getDb()
     const current = getEquipment(id)
     if (current.assetTag.toLowerCase() !== assetTagConfirmation.trim().toLowerCase()) {
-      throw new AppError('Confirmation asset tag does not match.')
+      throw new AppError('Tombamento de confirmação não confere.')
     }
     db.query('DELETE FROM equipment WHERE id = ?').run(id)
   })

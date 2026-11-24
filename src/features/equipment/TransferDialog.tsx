@@ -56,11 +56,11 @@ export function TransferDialog({
         transferredOn: date,
         reason,
       })
-      toast.success('Transfer recorded')
+      toast.success('Transferência registrada')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -68,14 +68,14 @@ export function TransferDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Transfer equipment</DialogTitle>
+          <DialogTitle>Transferir equipamento</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label>Destination sector</Label>
+            <Label>Setor de destino</Label>
             <Select value={toSectorId} onValueChange={setToSectorId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select" />
+                <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
                 {sectors.map((sector) => (
@@ -87,23 +87,23 @@ export function TransferDialog({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Location</Label>
+            <Label>Localização</Label>
             <Input value={location} onChange={(e) => setLocation(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Date</Label>
+            <Label>Data</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Reason</Label>
+            <Label>Motivo</Label>
             <Textarea value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
-          <Button onClick={() => void submit()}>Transfer</Button>
+          <Button onClick={() => void submit()}>Transferir</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

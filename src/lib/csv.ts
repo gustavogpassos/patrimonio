@@ -11,22 +11,22 @@ function escapeCsv(value: string | null | undefined): string {
 
 export function buildEquipmentCsv(items: EquipmentListItem[]): string {
   const header = [
-    'asset tag',
-    'name',
-    'description',
-    'category',
-    'sector',
-    'location',
-    'brand',
-    'model',
-    'serial number',
+    'tombamento',
+    'nome',
+    'descrição',
+    'categoria',
+    'setor',
+    'localização',
+    'marca',
+    'modelo',
+    'número de série',
     'status',
-    'acquisition date',
-    'amount',
-    'supplier',
-    'invoice',
-    'warranty until',
-    'notes',
+    'data de aquisição',
+    'valor',
+    'fornecedor',
+    'nota fiscal',
+    'garantia até',
+    'observações',
   ].join(';')
 
   const rows = items.map((item) =>

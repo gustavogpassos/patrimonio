@@ -78,7 +78,7 @@ export function OpenMaintenanceDialog({
       try {
         costCents = parseBRLToCents(cost)
       } catch {
-        toast.error('Invalid cost')
+        toast.error('Custo inválido')
         return
       }
       await api.openMaintenance({
@@ -89,11 +89,11 @@ export function OpenMaintenanceDialog({
         costCents,
         serviceProvider,
       })
-      toast.success('Maintenance opened')
+      toast.success('Manutenção aberta')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -101,20 +101,20 @@ export function OpenMaintenanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>New maintenance</DialogTitle>
+          <DialogTitle>Nova manutenção</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           {!equipmentId && (
             <>
               <div className="space-y-1">
-                <Label>Search equipment</Label>
+                <Label>Buscar equipamento</Label>
                 <Input value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label>Equipment</Label>
+                <Label>Equipamento</Label>
                 <Select value={selectedId} onValueChange={setSelectedId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     {filtered.map((item) => (
@@ -128,19 +128,19 @@ export function OpenMaintenanceDialog({
             </>
           )}
           <div className="space-y-1">
-            <Label>Type</Label>
+            <Label>Tipo</Label>
             <Select value={type} onValueChange={(value) => setType(value as typeof type)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="corrective">Corrective</SelectItem>
-                <SelectItem value="preventive">Preventive</SelectItem>
+                <SelectItem value="corrective">Corretiva</SelectItem>
+                <SelectItem value="preventive">Preventiva</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Opened on</Label>
+            <Label>Data de abertura</Label>
             <Input
               type="date"
               value={openedOn}
@@ -148,23 +148,23 @@ export function OpenMaintenanceDialog({
             />
           </div>
           <div className="space-y-1">
-            <Label>Problem</Label>
+            <Label>Problema</Label>
             <Textarea value={problem} onChange={(e) => setProblem(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Cost (R$)</Label>
+            <Label>Custo (R$)</Label>
             <Input value={cost} onChange={(e) => setCost(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Service provider</Label>
+            <Label>Assistência</Label>
             <Input value={serviceProvider} onChange={(e) => setServiceProvider(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
-          <Button onClick={() => void submit()}>Open</Button>
+          <Button onClick={() => void submit()}>Abrir</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -210,7 +210,7 @@ export function CompleteMaintenanceDialog({
       try {
         costCents = parseBRLToCents(cost)
       } catch {
-        toast.error('Invalid cost')
+        toast.error('Custo inválido')
         return
       }
       await api.completeMaintenance(maintenance.id, {
@@ -221,11 +221,11 @@ export function CompleteMaintenanceDialog({
         equipmentStatusAfter: statusAfter,
         writeOffReason: statusAfter === 'written_off' ? writeOffReason : null,
       })
-      toast.success('Maintenance completed')
+      toast.success('Manutenção concluída')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -233,27 +233,27 @@ export function CompleteMaintenanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Complete maintenance</DialogTitle>
+          <DialogTitle>Concluir manutenção</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label>Completed on</Label>
+            <Label>Data de conclusão</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Solution</Label>
+            <Label>Solução</Label>
             <Textarea value={solution} onChange={(e) => setSolution(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Cost (R$)</Label>
+            <Label>Custo (R$)</Label>
             <Input value={cost} onChange={(e) => setCost(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Service provider</Label>
+            <Label>Assistência</Label>
             <Input value={serviceProvider} onChange={(e) => setServiceProvider(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Next status</Label>
+            <Label>Status seguinte</Label>
             <Select
               value={statusAfter}
               onValueChange={(value) => setStatusAfter(value as typeof statusAfter)}
@@ -262,15 +262,15 @@ export function CompleteMaintenanceDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="in_use">In use</SelectItem>
-                <SelectItem value="in_stock">In stock</SelectItem>
-                <SelectItem value="written_off">Written off</SelectItem>
+                <SelectItem value="in_use">Em uso</SelectItem>
+                <SelectItem value="in_stock">Em estoque</SelectItem>
+                <SelectItem value="written_off">Baixado</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {statusAfter === 'written_off' && (
             <div className="space-y-1">
-              <Label>Write-off reason</Label>
+              <Label>Motivo da baixa</Label>
               <Textarea
                 value={writeOffReason}
                 onChange={(e) => setWriteOffReason(e.target.value)}
@@ -280,9 +280,9 @@ export function CompleteMaintenanceDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
-          <Button onClick={() => void submit()}>Complete</Button>
+          <Button onClick={() => void submit()}>Concluir</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -310,11 +310,11 @@ export function CancelMaintenanceDialog({
     if (!maintenance) return
     try {
       await api.cancelMaintenance(maintenance.id, { cancellationReason: reason })
-      toast.success('Maintenance cancelled')
+      toast.success('Manutenção cancelada')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -322,18 +322,18 @@ export function CancelMaintenanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Cancel maintenance</DialogTitle>
+          <DialogTitle>Cancelar manutenção</DialogTitle>
         </DialogHeader>
         <div className="space-y-1">
-          <Label>Reason</Label>
+          <Label>Motivo</Label>
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Back
+            Voltar
           </Button>
           <Button variant="destructive" onClick={() => void submit()}>
-            Cancel maintenance
+            Cancelar manutenção
           </Button>
         </DialogFooter>
       </DialogContent>

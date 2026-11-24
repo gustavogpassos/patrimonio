@@ -80,7 +80,7 @@ describe('equipment rules', () => {
     }
     createEquipment(base)
     expect(() => createEquipment({ ...base, name: 'PC 2' })).toThrow(
-      'An equipment item with this asset tag already exists.',
+      'Já existe um equipamento com este tombamento.',
     )
   })
 
@@ -107,7 +107,7 @@ describe('equipment rules', () => {
     createEquipment(base)
     expect(() =>
       createEquipment({ ...base, assetTag: 'PAT-000002', name: 'PC 2' }),
-    ).toThrow('An equipment item with this serial number already exists.')
+    ).toThrow('Já existe um equipamento com este número de série.')
   })
 
   test('cannot delete an occupied sector', () => {
@@ -130,7 +130,7 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    expect(() => deleteSector(sectorA.id)).toThrow(/Deactivate the sector/)
+    expect(() => deleteSector(sectorA.id)).toThrow(/Inative o setor/)
   })
 
   test('transfer and same destination', () => {
@@ -160,7 +160,7 @@ describe('equipment rules', () => {
         transferredOn: '2024-02-01',
         reason: 'Same place',
       }),
-    ).toThrow('Destination sector and location are the same as the current ones.')
+    ).toThrow('Setor e localização de destino são iguais aos atuais.')
 
     const moved = transferEquipment(created.id, {
       toSectorId: sectorB.id,

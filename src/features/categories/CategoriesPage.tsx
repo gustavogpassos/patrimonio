@@ -38,7 +38,7 @@ export function CategoriesPage() {
     try {
       setItems(await api.listCategories(true))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -73,7 +73,7 @@ export function CategoriesPage() {
     if (regularMaintenance) {
       const days = Number(interval)
       if (!Number.isInteger(days) || days < 1 || days > 3650) {
-        toast.error('Enter the regular maintenance interval, in days.')
+        toast.error('Informe a frequência da manutenção regular, em dias.')
         return
       }
       maintenanceIntervalDays = days
@@ -87,11 +87,11 @@ export function CategoriesPage() {
         regularMaintenance,
         maintenanceIntervalDays,
       })
-      toast.success(editing ? 'Category updated' : 'Category created')
+      toast.success(editing ? 'Categoria atualizada' : 'Categoria cadastrada')
       setOpen(false)
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -105,21 +105,21 @@ export function CategoriesPage() {
         regularMaintenance: category.regularMaintenance,
         maintenanceIntervalDays: category.maintenanceIntervalDays,
       })
-      toast.success(category.active ? 'Category deactivated' : 'Category reactivated')
+      toast.success(category.active ? 'Categoria inativada' : 'Categoria reativada')
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
   async function remove(category: Category) {
-    if (!window.confirm(`Delete category "${category.name}"?`)) return
+    if (!window.confirm(`Excluir a categoria "${category.name}"?`)) return
     try {
       await api.deleteCategory(category.id)
-      toast.success('Category deleted')
+      toast.success('Categoria excluída')
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -127,28 +127,28 @@ export function CategoriesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Categories</h2>
-          <p className="text-muted-foreground">Types of IT equipment</p>
+          <h2 className="text-2xl font-semibold">Categorias</h2>
+          <p className="text-muted-foreground">Tipos de equipamentos de informática</p>
         </div>
-        <Button onClick={openNew}>New category</Button>
+        <Button onClick={openNew}>Nova categoria</Button>
       </div>
 
       {items.length === 0 ? (
         <EmptyState
-          title="No categories yet"
-          action={<Button onClick={openNew}>New category</Button>}
+          title="Nenhuma categoria cadastrada"
+          action={<Button onClick={openNew}>Nova categoria</Button>}
         />
       ) : (
         <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Maintenance</TableHead>
-              <TableHead>Equipment</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Manutenção</TableHead>
+              <TableHead>Equipamentos</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -158,7 +158,7 @@ export function CategoriesPage() {
                 <TableCell>{category.description ?? '—'}</TableCell>
                 <TableCell>
                   {category.regularMaintenance && category.maintenanceIntervalDays
-                    ? `Every ${category.maintenanceIntervalDays} ${category.maintenanceIntervalDays === 1 ? 'day' : 'days'}`
+                    ? `A cada ${category.maintenanceIntervalDays} ${category.maintenanceIntervalDays === 1 ? 'dia' : 'dias'}`
                     : '—'}
                 </TableCell>
                 <TableCell>{category.equipmentCount}</TableCell>
@@ -167,13 +167,13 @@ export function CategoriesPage() {
                 </TableCell>
                 <TableCell className="space-x-2 text-right">
                   <Button size="sm" variant="outline" onClick={() => openEdit(category)}>
-                    Edit
+                    Editar
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => void toggleActive(category)}>
-                    {category.active ? 'Deactivate' : 'Reactivate'}
+                    {category.active ? 'Inativar' : 'Reativar'}
                   </Button>
                   <Button size="sm" variant="destructive" onClick={() => void remove(category)}>
-                    Delete
+                    Excluir
                   </Button>
                 </TableCell>
               </TableRow>
@@ -186,15 +186,15 @@ export function CategoriesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit category' : 'New category'}</DialogTitle>
+            <DialogTitle>{editing ? 'Editar categoria' : 'Nova categoria'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nome</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
                 value={description}
@@ -207,7 +207,7 @@ export function CategoriesPage() {
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
               />
-              Active
+              Ativo
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -215,11 +215,11 @@ export function CategoriesPage() {
                 checked={regularMaintenance}
                 onChange={(e) => setRegularMaintenance(e.target.checked)}
               />
-              Regular maintenance
+              Manutenção regular
             </label>
             {regularMaintenance && (
               <div className="space-y-1">
-                <Label htmlFor="interval">Interval (days)</Label>
+                <Label htmlFor="interval">Frequência (dias)</Label>
                 <Input
                   id="interval"
                   type="number"
@@ -233,9 +233,9 @@ export function CategoriesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              Cancelar
             </Button>
-            <Button onClick={() => void save()}>Save</Button>
+            <Button onClick={() => void save()}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

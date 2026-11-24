@@ -77,7 +77,7 @@ export function getSector(id: number): Sector {
          FROM sectors s WHERE s.id = ?`,
       )
       .get(id)
-    if (!row) throw new AppError('Sector not found.')
+    if (!row) throw new AppError('Setor não encontrado.')
     return mapRow(row)
   })
 }
@@ -92,10 +92,10 @@ export function deleteSector(id: number) {
       .get(id)?.c ?? 0
     if (count > 0) {
       throw new AppError(
-        'Cannot delete: this sector has equipment. Deactivate the sector.',
+        'Não é possível excluir: há equipamentos neste setor. Inative o setor.',
       )
     }
     const result = db.query('DELETE FROM sectors WHERE id = ?').run(id)
-    if (result.changes === 0) throw new AppError('Sector not found.')
+    if (result.changes === 0) throw new AppError('Setor não encontrado.')
   })
 }

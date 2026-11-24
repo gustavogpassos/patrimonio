@@ -38,11 +38,11 @@ export function WriteOffDialog({
   async function submit() {
     try {
       await api.writeOff(equipment.id, { writtenOffOn: date, writeOffReason: reason })
-      toast.success('Equipment written off')
+      toast.success('Equipamento baixado')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -50,24 +50,24 @@ export function WriteOffDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Write off equipment</DialogTitle>
+          <DialogTitle>Baixar equipamento</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label>Date</Label>
+            <Label>Data</Label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label>Reason</Label>
+            <Label>Motivo</Label>
             <Textarea value={reason} onChange={(e) => setReason(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button variant="destructive" onClick={() => void submit()}>
-            Write off
+            Baixar
           </Button>
         </DialogFooter>
       </DialogContent>

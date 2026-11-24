@@ -21,7 +21,7 @@ export function parseBRLToCents(raw: string): number | null {
   }
   const n = Number(normalized)
   if (!Number.isFinite(n) || n < 0) {
-    throw new Error('Invalid amount')
+    throw new Error('Valor inválido')
   }
   return Math.round(n * 100)
 }

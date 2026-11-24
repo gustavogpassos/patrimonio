@@ -26,7 +26,7 @@ export async function importDatabase(bytes: Uint8Array) {
         )
         .get()
       if (!row) {
-        throw new AppError('File is not an Assets database.')
+        throw new AppError('Arquivo não é um banco do Patrimônio.')
       }
     } finally {
       probe.close()
@@ -51,7 +51,7 @@ export async function importDatabase(bytes: Uint8Array) {
       // ignore
     }
     if (err instanceof AppError) throw err
-    throw new AppError('File is not an Assets database.')
+    throw new AppError('Arquivo não é um banco do Patrimônio.')
   } finally {
     if (existsSync(tempPath)) unlinkSync(tempPath)
   }

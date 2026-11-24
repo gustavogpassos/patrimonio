@@ -82,7 +82,7 @@ describe('regular maintenance', () => {
         regularMaintenance: true,
         maintenanceIntervalDays: null,
       }),
-    ).toThrow(/interval/)
+    ).toThrow(/frequência/)
   })
 
   test('the warning counts from registration and completion restarts the deadline', () => {

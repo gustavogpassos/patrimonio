@@ -82,7 +82,7 @@ function categoryInterval(input: CategoryInput): number | null {
   if (!input.regularMaintenance) return null
   const days = input.maintenanceIntervalDays
   if (days == null || !Number.isInteger(days) || days < 1 || days > 3650) {
-    throw new AppError('Enter the regular maintenance interval, in days.')
+    throw new AppError('Informe a frequência da manutenção regular, em dias.')
   }
   return days
 }
@@ -97,7 +97,7 @@ export function getCategory(id: number): Category {
          FROM categories c WHERE c.id = ?`,
       )
       .get(id)
-    if (!row) throw new AppError('Category not found.')
+    if (!row) throw new AppError('Categoria não encontrada.')
     return mapRow(row)
   })
 }
@@ -112,10 +112,10 @@ export function deleteCategory(id: number) {
       .get(id)?.c ?? 0
     if (count > 0) {
       throw new AppError(
-        'Cannot delete: this category has equipment. Deactivate the category.',
+        'Não é possível excluir: há equipamentos nesta categoria. Inative a categoria.',
       )
     }
     const result = db.query('DELETE FROM categories WHERE id = ?').run(id)
-    if (result.changes === 0) throw new AppError('Category not found.')
+    if (result.changes === 0) throw new AppError('Categoria não encontrada.')
   })
 }

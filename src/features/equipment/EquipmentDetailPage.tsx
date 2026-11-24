@@ -45,7 +45,7 @@ export function EquipmentDetailPage() {
     try {
       setEquipment(await api.getEquipment(Number(id)))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -55,17 +55,17 @@ export function EquipmentDetailPage() {
 
   async function reactivate() {
     if (!equipment) return
-    if (!window.confirm('Status will return to In stock.')) return
+    if (!window.confirm('O status volta para Em estoque.')) return
     try {
       await api.reactivate(equipment.id)
-      toast.success('Equipment reactivated')
+      toast.success('Equipamento reativado')
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
-  if (!equipment) return <p className="text-muted-foreground">Loading…</p>
+  if (!equipment) return <p className="text-muted-foreground">Carregando…</p>
 
   const writtenOff = equipment.status === 'written_off'
 
@@ -81,28 +81,28 @@ export function EquipmentDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild>
-            <Link to={`/equipment/${equipment.id}/edit`}>Edit</Link>
+            <Link to={`/equipment/${equipment.id}/edit`}>Editar</Link>
           </Button>
           {!writtenOff && (
             <>
               <Button variant="outline" onClick={() => setTransferOpen(true)}>
-                Transfer
+                Transferir
               </Button>
               <Button variant="outline" onClick={() => setOpenMaintenance(true)}>
-                New maintenance
+                Nova manutenção
               </Button>
               <Button variant="outline" onClick={() => setWriteOffOpen(true)}>
-                Write off
+                Baixar
               </Button>
             </>
           )}
           {writtenOff && (
             <Button variant="outline" onClick={() => void reactivate()}>
-              Reactivate
+              Reativar
             </Button>
           )}
           <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-            Delete
+            Excluir
           </Button>
         </div>
       </div>
@@ -110,27 +110,27 @@ export function EquipmentDetailPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Registration</CardTitle>
+            <CardTitle className="text-base">Dados cadastrais</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm sm:grid-cols-2">
-            <Info label="Category" value={equipment.categoryName} inactive={!equipment.categoryActive} />
-            <Info label="Brand" value={equipment.brand} />
-            <Info label="Model" value={equipment.model} />
-            <Info label="Serial number" value={equipment.serialNumber} />
-            <Info label="Acquired" value={formatDate(equipment.acquiredOn)} />
-            <Info label="Amount" value={formatBRL(equipment.acquisitionValueCents)} />
-            <Info label="Supplier" value={equipment.supplier} />
-            <Info label="Invoice" value={equipment.invoice} />
+            <Info label="Categoria" value={equipment.categoryName} inactive={!equipment.categoryActive} />
+            <Info label="Marca" value={equipment.brand} />
+            <Info label="Modelo" value={equipment.model} />
+            <Info label="Número de série" value={equipment.serialNumber} />
+            <Info label="Aquisição" value={formatDate(equipment.acquiredOn)} />
+            <Info label="Valor" value={formatBRL(equipment.acquisitionValueCents)} />
+            <Info label="Fornecedor" value={equipment.supplier} />
+            <Info label="Nota fiscal" value={equipment.invoice} />
             <div className="sm:col-span-2">
-              <Info label="Description" value={equipment.description} />
+              <Info label="Descrição" value={equipment.description} />
             </div>
             <div className="sm:col-span-2">
-              <Info label="Notes" value={equipment.notes} />
+              <Info label="Observações" value={equipment.notes} />
             </div>
             {writtenOff && (
               <>
-                <Info label="Write-off date" value={formatDate(equipment.writtenOffOn)} />
-                <Info label="Write-off reason" value={equipment.writeOffReason} />
+                <Info label="Data da baixa" value={formatDate(equipment.writtenOffOn)} />
+                <Info label="Motivo da baixa" value={equipment.writeOffReason} />
               </>
             )}
           </CardContent>
@@ -138,17 +138,17 @@ export function EquipmentDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Location and warranty</CardTitle>
+            <CardTitle className="text-base">Localização e garantia</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-2 text-sm">
-            <Info label="Sector" value={equipment.sectorName} inactive={!equipment.sectorActive} />
-            <Info label="Location" value={equipment.location} />
+            <Info label="Setor" value={equipment.sectorName} inactive={!equipment.sectorActive} />
+            <Info label="Localização" value={equipment.location} />
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Warranty</span>
+              <span className="text-muted-foreground">Garantia</span>
               <WarrantyBadge warrantyUntil={equipment.warrantyUntil} />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Regular maintenance</span>
+              <span className="text-muted-foreground">Manutenção regular</span>
               <RegularMaintenanceBadge
                 intervalDays={
                   equipment.categoryRegularMaintenance
@@ -166,16 +166,16 @@ export function EquipmentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Transfers</CardTitle>
+          <CardTitle className="text-base">Movimentações</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>To</TableHead>
-                <TableHead>Reason</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead>Destino</TableHead>
+                <TableHead>Motivo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -183,7 +183,7 @@ export function EquipmentDetailPage() {
                 <TableRow key={transfer.id}>
                   <TableCell>{formatDate(transfer.transferredOn)}</TableCell>
                   <TableCell>
-                    {transfer.fromSectorName ?? 'Registration'}
+                    {transfer.fromSectorName ?? 'Cadastro'}
                     {transfer.fromLocation ? ` · ${transfer.fromLocation}` : ''}
                   </TableCell>
                   <TableCell>
@@ -200,16 +200,16 @@ export function EquipmentDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Maintenance</CardTitle>
+          <CardTitle className="text-base">Manutenções</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Opened</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Problem</TableHead>
+                <TableHead>Abertura</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Situação</TableHead>
+                <TableHead>Problema</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -217,7 +217,7 @@ export function EquipmentDetailPage() {
               {equipment.maintenance.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-muted-foreground">
-                    No maintenance.
+                    Nenhuma manutenção.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -233,10 +233,10 @@ export function EquipmentDetailPage() {
                       {record.state === 'open' && (
                         <>
                           <Button size="sm" variant="outline" onClick={() => setCompleteTarget(record)}>
-                            Complete
+                            Concluir
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => setCancelTarget(record)}>
-                            Cancel
+                            Cancelar
                           </Button>
                         </>
                       )}
@@ -305,7 +305,7 @@ function Info({
         {value || '—'}
         {inactive && (
           <Badge variant="outline" className="ml-2">
-            Inactive
+            Inativo
           </Badge>
         )}
       </div>
