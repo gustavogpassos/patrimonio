@@ -1,18 +1,18 @@
-export function formatBRL(centavos: number | null | undefined): string {
-  if (centavos == null) return '—'
+export function formatBRL(cents: number | null | undefined): string {
+  if (cents == null) return '—'
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(centavos / 100)
+  }).format(cents / 100)
 }
 
-export function formatBRLPlain(centavos: number | null | undefined): string {
-  if (centavos == null) return ''
-  return (centavos / 100).toFixed(2).replace('.', ',')
+export function formatBRLPlain(cents: number | null | undefined): string {
+  if (cents == null) return ''
+  return (cents / 100).toFixed(2).replace('.', ',')
 }
 
-/** Aceita "1.234,56", "1234,56" ou "1234.56" e devolve centavos. */
-export function parseBRLToCentavos(raw: string): number | null {
+/** Accepts "1.234,56", "1234,56", or "1234.56" and returns cents. */
+export function parseBRLToCents(raw: string): number | null {
   const t = raw.trim()
   if (!t) return null
   let normalized = t.replace(/\s/g, '')
@@ -21,7 +21,7 @@ export function parseBRLToCentavos(raw: string): number | null {
   }
   const n = Number(normalized)
   if (!Number.isFinite(n) || n < 0) {
-    throw new Error('Valor inválido')
+    throw new Error('Invalid amount')
   }
   return Math.round(n * 100)
 }

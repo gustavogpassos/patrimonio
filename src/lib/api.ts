@@ -1,25 +1,25 @@
 import type {
-  Categoria,
-  EquipamentoDetalhe,
-  EquipamentoListItem,
-  Manutencao,
+  Category,
+  DashboardData,
+  EquipmentDetail,
+  EquipmentListItem,
+  EquipmentStatus,
+  Maintenance,
+  MaintenanceState,
+  MaintenanceType,
   Paginated,
-  PainelData,
-  Setor,
-  StatusEquipamento,
-  SituacaoManutencao,
-  TipoManutencao,
+  Sector,
 } from './types'
 import type {
-  AbrirManutencaoInput,
-  BaixarInput,
-  CancelarManutencaoInput,
-  CategoriaInput,
-  ConcluirManutencaoInput,
-  CreateEquipamentoInput,
-  SetorInput,
-  TransferirInput,
-  UpdateEquipamentoInput,
+  CancelMaintenanceInput,
+  CategoryInput,
+  CompleteMaintenanceInput,
+  CreateEquipmentInput,
+  OpenMaintenanceInput,
+  SectorInput,
+  TransferInput,
+  UpdateEquipmentInput,
+  WriteOffInput,
 } from './schemas'
 
 export class ApiError extends Error {
@@ -32,10 +32,10 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init)
   if (!res.ok) {
-    let message = 'Não foi possível concluir a operação.'
+    let message = 'Could not complete the operation.'
     try {
-      const body = (await res.json()) as { erro?: string }
-      if (body.erro) message = body.erro
+      const body = (await res.json()) as { error?: string }
+      if (body.error) message = body.error
     } catch {
       // ignore
     }
@@ -57,37 +57,37 @@ function jsonBody(data: unknown): RequestInit {
 }
 
 export const api = {
-  painel: () => request<PainelData>('/api/painel'),
+  dashboard: () => request<DashboardData>('/api/dashboard'),
 
-  listSetores: (incluirInativos = false) =>
-    request<Setor[]>(`/api/setores?incluirInativos=${incluirInativos}`),
-  saveSetor: (data: SetorInput & { id?: number }) =>
+  listSectors: (includeInactive = false) =>
+    request<Sector[]>(`/api/sectors?includeInactive=${includeInactive}`),
+  saveSector: (data: SectorInput & { id?: number }) =>
     data.id
-      ? request<Setor>(`/api/setores/${data.id}`, { method: 'PATCH', ...jsonBody(data) })
-      : request<Setor>('/api/setores', { method: 'POST', ...jsonBody(data) }),
-  deleteSetor: (id: number) =>
-    request<{ ok: boolean }>(`/api/setores/${id}`, { method: 'DELETE' }),
+      ? request<Sector>(`/api/sectors/${data.id}`, { method: 'PATCH', ...jsonBody(data) })
+      : request<Sector>('/api/sectors', { method: 'POST', ...jsonBody(data) }),
+  deleteSector: (id: number) =>
+    request<{ ok: boolean }>(`/api/sectors/${id}`, { method: 'DELETE' }),
 
-  listCategorias: (incluirInativos = false) =>
-    request<Categoria[]>(`/api/categorias?incluirInativos=${incluirInativos}`),
-  saveCategoria: (data: CategoriaInput & { id?: number }) =>
+  listCategories: (includeInactive = false) =>
+    request<Category[]>(`/api/categories?includeInactive=${includeInactive}`),
+  saveCategory: (data: CategoryInput & { id?: number }) =>
     data.id
-      ? request<Categoria>(`/api/categorias/${data.id}`, {
+      ? request<Category>(`/api/categories/${data.id}`, {
           method: 'PATCH',
           ...jsonBody(data),
         })
-      : request<Categoria>('/api/categorias', { method: 'POST', ...jsonBody(data) }),
-  deleteCategoria: (id: number) =>
-    request<{ ok: boolean }>(`/api/categorias/${id}`, { method: 'DELETE' }),
+      : request<Category>('/api/categories', { method: 'POST', ...jsonBody(data) }),
+  deleteCategory: (id: number) =>
+    request<{ ok: boolean }>(`/api/categories/${id}`, { method: 'DELETE' }),
 
-  nextTombamento: () =>
-    request<{ tombamento: string }>('/api/equipamentos/proximo-tombamento'),
+  nextAssetTag: () =>
+    request<{ assetTag: string }>('/api/equipment/next-asset-tag'),
 
-  listEquipamentos: (params: {
+  listEquipment: (params: {
     q?: string
-    categoriaId?: number
-    setorId?: number
-    status?: StatusEquipamento
+    categoryId?: number
+    sectorId?: number
+    status?: EquipmentStatus
     sort?: string
     order?: string
     page?: number
@@ -95,85 +95,85 @@ export const api = {
   } = {}) => {
     const qs = new URLSearchParams()
     if (params.q) qs.set('q', params.q)
-    if (params.categoriaId) qs.set('categoriaId', String(params.categoriaId))
-    if (params.setorId) qs.set('setorId', String(params.setorId))
+    if (params.categoryId) qs.set('categoryId', String(params.categoryId))
+    if (params.sectorId) qs.set('sectorId', String(params.sectorId))
     if (params.status) qs.set('status', params.status)
     if (params.sort) qs.set('sort', params.sort)
     if (params.order) qs.set('order', params.order)
     if (params.page) qs.set('page', String(params.page))
     if (params.pageSize != null) qs.set('pageSize', String(params.pageSize))
-    return request<Paginated<EquipamentoListItem>>(`/api/equipamentos?${qs}`)
+    return request<Paginated<EquipmentListItem>>(`/api/equipment?${qs}`)
   },
 
-  getEquipamento: (id: number) =>
-    request<EquipamentoDetalhe>(`/api/equipamentos/${id}`),
-  createEquipamento: (data: CreateEquipamentoInput) =>
-    request<EquipamentoDetalhe>('/api/equipamentos', {
+  getEquipment: (id: number) =>
+    request<EquipmentDetail>(`/api/equipment/${id}`),
+  createEquipment: (data: CreateEquipmentInput) =>
+    request<EquipmentDetail>('/api/equipment', {
       method: 'POST',
       ...jsonBody(data),
     }),
-  updateEquipamento: (id: number, data: UpdateEquipamentoInput) =>
-    request<EquipamentoDetalhe>(`/api/equipamentos/${id}`, {
+  updateEquipment: (id: number, data: UpdateEquipmentInput) =>
+    request<EquipmentDetail>(`/api/equipment/${id}`, {
       method: 'PATCH',
       ...jsonBody(data),
     }),
-  transferir: (id: number, data: TransferirInput) =>
-    request<EquipamentoDetalhe>(`/api/equipamentos/${id}/transferir`, {
+  transfer: (id: number, data: TransferInput) =>
+    request<EquipmentDetail>(`/api/equipment/${id}/transfer`, {
       method: 'POST',
       ...jsonBody(data),
     }),
-  baixar: (id: number, data: BaixarInput) =>
-    request<EquipamentoDetalhe>(`/api/equipamentos/${id}/baixar`, {
+  writeOff: (id: number, data: WriteOffInput) =>
+    request<EquipmentDetail>(`/api/equipment/${id}/write-off`, {
       method: 'POST',
       ...jsonBody(data),
     }),
-  reativar: (id: number) =>
-    request<EquipamentoDetalhe>(`/api/equipamentos/${id}/reativar`, {
+  reactivate: (id: number) =>
+    request<EquipmentDetail>(`/api/equipment/${id}/reactivate`, {
       method: 'POST',
     }),
-  excluir: (id: number, tombamentoConfirmacao: string) =>
-    request<{ ok: boolean }>(`/api/equipamentos/${id}/excluir`, {
+  deleteEquipment: (id: number, assetTagConfirmation: string) =>
+    request<{ ok: boolean }>(`/api/equipment/${id}/delete`, {
       method: 'POST',
-      ...jsonBody({ tombamentoConfirmacao }),
+      ...jsonBody({ assetTagConfirmation }),
     }),
 
-  listManutencoes: (params: {
-    situacao?: SituacaoManutencao
-    tipo?: TipoManutencao
-    equipamentoId?: number
+  listMaintenance: (params: {
+    state?: MaintenanceState
+    type?: MaintenanceType
+    equipmentId?: number
     q?: string
     page?: number
     pageSize?: number
   } = {}) => {
     const qs = new URLSearchParams()
-    if (params.situacao) qs.set('situacao', params.situacao)
-    if (params.tipo) qs.set('tipo', params.tipo)
-    if (params.equipamentoId) qs.set('equipamentoId', String(params.equipamentoId))
+    if (params.state) qs.set('state', params.state)
+    if (params.type) qs.set('type', params.type)
+    if (params.equipmentId) qs.set('equipmentId', String(params.equipmentId))
     if (params.q) qs.set('q', params.q)
     if (params.page) qs.set('page', String(params.page))
     if (params.pageSize) qs.set('pageSize', String(params.pageSize))
-    return request<Paginated<Manutencao>>(`/api/manutencoes?${qs}`)
+    return request<Paginated<Maintenance>>(`/api/maintenance?${qs}`)
   },
-  abrirManutencao: (data: AbrirManutencaoInput) =>
-    request<Manutencao>('/api/manutencoes', { method: 'POST', ...jsonBody(data) }),
-  concluirManutencao: (id: number, data: ConcluirManutencaoInput) =>
-    request<Manutencao>(`/api/manutencoes/${id}/concluir`, {
+  openMaintenance: (data: OpenMaintenanceInput) =>
+    request<Maintenance>('/api/maintenance', { method: 'POST', ...jsonBody(data) }),
+  completeMaintenance: (id: number, data: CompleteMaintenanceInput) =>
+    request<Maintenance>(`/api/maintenance/${id}/complete`, {
       method: 'POST',
       ...jsonBody(data),
     }),
-  cancelarManutencao: (id: number, data: CancelarManutencaoInput) =>
-    request<Manutencao>(`/api/manutencoes/${id}/cancelar`, {
+  cancelMaintenance: (id: number, data: CancelMaintenanceInput) =>
+    request<Maintenance>(`/api/maintenance/${id}/cancel`, {
       method: 'POST',
       ...jsonBody(data),
     }),
 
   async downloadBackup() {
     const res = await fetch('/api/backup')
-    if (!res.ok) throw new ApiError('Não foi possível baixar o backup.')
+    if (!res.ok) throw new ApiError('Could not download the backup.')
     const blob = await res.blob()
     const cd = res.headers.get('Content-Disposition')
     const match = cd?.match(/filename="(.+)"/)
-    const name = match?.[1] ?? 'patrimonio-backup.db'
+    const name = match?.[1] ?? 'assets-backup.db'
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url

@@ -1,21 +1,21 @@
-# Patrimônio
+# Assets
 
-Controle dos bens da organização: onde estão, como se movem e, no caso dos equipamentos, como são mantidos.
+Tracks the organization's equipment: where it is, how it moves, and, for equipment, how it is maintained.
 
 ## Language
 
-**Setor**:
-Unidade da organização em que um bem está lotado.
-_Avoid_: Departamento, local, sala
+**Sector**:
+Organizational unit an equipment item is assigned to.
+_Avoid_: Department, place, room
 
-**Localização**:
-Texto livre que precisa o ponto do bem dentro do setor — uma sala, a recepção, um corredor.
-_Avoid_: Complemento, sala
+**Location**:
+Free text that pinpoints the equipment inside the sector — a room, reception, a corridor.
+_Avoid_: Complement, room
 
-**Equipamento**:
-Bem de informática controlado pelo sistema, com tombamento, categoria e manutenção.
-_Avoid_: Ativo, item, patrimônio
+**Equipment**:
+IT item tracked by the system, with an asset tag, category, and maintenance.
+_Avoid_: Asset, item
 
-**Manutenção regular**:
-Revisão periódica exigida pela categoria, medida em dias. A primeira contagem começa na data de cadastro do equipamento. Uma manutenção concluída reinicia a contagem na data de conclusão.
-_Avoid_: Garantia, revisão
+**Regular maintenance**:
+Periodic service required by the category, measured in days. The first count starts on the equipment registration date. A completed maintenance restarts the count on the completion date.
+_Avoid_: Warranty, service

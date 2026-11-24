@@ -1,8 +1,8 @@
 import { Badge } from '@/components/ui/badge'
-import { garantiaInfo } from '@/lib/dates'
+import { warrantyInfo } from '@/lib/dates'
 
-export function GarantiaBadge({ garantiaAte }: { garantiaAte: string | null }) {
-  const info = garantiaInfo(garantiaAte)
+export function WarrantyBadge({ warrantyUntil }: { warrantyUntil: string | null }) {
+  const info = warrantyInfo(warrantyUntil)
   const className =
     info.kind === 'expired'
       ? 'bg-red-100 text-red-800 border-red-200'

@@ -1,95 +1,95 @@
 import { describe, expect, test } from 'bun:test'
-import { garantiaInfo, manutencaoRegularInfo } from './dates'
+import { regularMaintenanceInfo, warrantyInfo } from './dates'
 
-describe('garantiaInfo', () => {
-  test('sem garantia', () => {
-    expect(garantiaInfo(null, '2026-11-19').kind).toBe('none')
+describe('warrantyInfo', () => {
+  test('no warranty', () => {
+    expect(warrantyInfo(null, '2026-11-19').kind).toBe('none')
   })
 
-  test('vencida', () => {
-    const info = garantiaInfo('2026-11-01', '2026-11-19')
+  test('expired', () => {
+    const info = warrantyInfo('2026-11-01', '2026-11-19')
     expect(info.kind).toBe('expired')
   })
 
-  test('vence em 30', () => {
-    const info = garantiaInfo('2026-12-01', '2026-11-19')
+  test('due in 30 days', () => {
+    const info = warrantyInfo('2026-12-01', '2026-11-19')
     expect(info.kind).toBe('soon')
-    if (info.kind === 'soon') expect(info.label).toContain('Vence em')
+    if (info.kind === 'soon') expect(info.label).toContain('Due in')
   })
 
   test('ok', () => {
-    const info = garantiaInfo('2027-11-19', '2026-11-19')
+    const info = warrantyInfo('2027-11-19', '2026-11-19')
     expect(info.kind).toBe('ok')
   })
 })
 
-describe('manutencaoRegularInfo', () => {
-  test('sem frequência não avisa', () => {
+describe('regularMaintenanceInfo', () => {
+  test('no interval does not warn', () => {
     expect(
-      manutencaoRegularInfo({
-        intervaloDias: null,
-        cadastradoEm: '2026-01-01 10:00:00',
-        ultimaConclusao: null,
+      regularMaintenanceInfo({
+        intervalDays: null,
+        registeredAt: '2026-01-01 10:00:00',
+        lastCompletedOn: null,
         today: '2026-06-01',
       }).kind,
     ).toBe('none')
   })
 
-  test('baixado não avisa', () => {
+  test('written off does not warn', () => {
     expect(
-      manutencaoRegularInfo({
-        intervaloDias: 30,
-        cadastradoEm: '2026-01-01',
-        ultimaConclusao: null,
+      regularMaintenanceInfo({
+        intervalDays: 30,
+        registeredAt: '2026-01-01',
+        lastCompletedOn: null,
         today: '2026-06-01',
-        baixado: true,
+        writtenOff: true,
       }).kind,
     ).toBe('none')
   })
 
-  test('a contagem começa no cadastro e vence no dia', () => {
-    const info = manutencaoRegularInfo({
-      intervaloDias: 30,
-      cadastradoEm: '2026-01-01 15:30:00',
-      ultimaConclusao: null,
+  test('the count starts on registration and is due that day', () => {
+    const info = regularMaintenanceInfo({
+      intervalDays: 30,
+      registeredAt: '2026-01-01 15:30:00',
+      lastCompletedOn: null,
       today: '2026-01-31',
     })
     expect(info).toMatchObject({
       kind: 'due',
-      vencimento: '2026-01-31',
-      label: 'Manutenção hoje',
+      dueOn: '2026-01-31',
+      label: 'Maintenance due today',
     })
   })
 
-  test('antes do prazo está em dia', () => {
-    const info = manutencaoRegularInfo({
-      intervaloDias: 30,
-      cadastradoEm: '2026-01-01',
-      ultimaConclusao: null,
+  test('before the deadline it is on time', () => {
+    const info = regularMaintenanceInfo({
+      intervalDays: 30,
+      registeredAt: '2026-01-01',
+      lastCompletedOn: null,
       today: '2026-01-30',
     })
     expect(info.kind).toBe('ok')
-    if (info.kind === 'ok') expect(info.vencimento).toBe('2026-01-31')
+    if (info.kind === 'ok') expect(info.dueOn).toBe('2026-01-31')
   })
 
-  test('depois do prazo avisa o atraso', () => {
-    const info = manutencaoRegularInfo({
-      intervaloDias: 30,
-      cadastradoEm: '2026-01-01',
-      ultimaConclusao: null,
+  test('after the deadline it reports the delay', () => {
+    const info = regularMaintenanceInfo({
+      intervalDays: 30,
+      registeredAt: '2026-01-01',
+      lastCompletedOn: null,
       today: '2026-02-02',
     })
-    expect(info).toMatchObject({ kind: 'due', label: 'Atrasada há 2 dias' })
+    expect(info).toMatchObject({ kind: 'due', label: 'Overdue by 2 days' })
   })
 
-  test('manutenção concluída reinicia a contagem', () => {
-    const info = manutencaoRegularInfo({
-      intervaloDias: 30,
-      cadastradoEm: '2026-01-01',
-      ultimaConclusao: '2026-02-01',
+  test('completed maintenance restarts the count', () => {
+    const info = regularMaintenanceInfo({
+      intervalDays: 30,
+      registeredAt: '2026-01-01',
+      lastCompletedOn: '2026-02-01',
       today: '2026-02-10',
     })
     expect(info.kind).toBe('ok')
-    if (info.kind === 'ok') expect(info.vencimento).toBe('2026-03-03')
+    if (info.kind === 'ok') expect(info.dueOn).toBe('2026-03-03')
   })
 })

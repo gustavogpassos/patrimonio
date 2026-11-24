@@ -10,8 +10,13 @@ const MIGRATIONS: Array<{ version: number; description: string; file: string }> 
   },
   {
     version: 2,
-    description: 'manutenção regular na categoria',
+    description: 'regular maintenance on category',
     file: '002_manutencao_regular.sql',
+  },
+  {
+    version: 3,
+    description: 'english schema names',
+    file: '003_english_schema.sql',
   },
 ]
 

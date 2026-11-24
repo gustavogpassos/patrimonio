@@ -9,38 +9,38 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
-import type { EquipamentoDetalhe } from '@/lib/types'
+import type { EquipmentDetail } from '@/lib/types'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-export function ExcluirDialog({
+export function DeleteDialog({
   open,
   onOpenChange,
-  equipamento,
+  equipment,
   onDone,
 }: {
   open: boolean
-  onOpenChange: (v: boolean) => void
-  equipamento: EquipamentoDetalhe
+  onOpenChange: (open: boolean) => void
+  equipment: EquipmentDetail
   onDone: () => void
 }) {
-  const [confirmacao, setConfirmacao] = useState('')
+  const [confirmation, setConfirmation] = useState('')
 
   useEffect(() => {
-    if (open) setConfirmacao('')
+    if (open) setConfirmation('')
   }, [open])
 
-  const ok =
-    confirmacao.trim().toLowerCase() === equipamento.tombamento.toLowerCase()
+  const matches =
+    confirmation.trim().toLowerCase() === equipment.assetTag.toLowerCase()
 
   async function submit() {
     try {
-      await api.excluir(equipamento.id, confirmacao)
-      toast.success('Equipamento excluído')
+      await api.deleteEquipment(equipment.id, confirmation)
+      toast.success('Equipment deleted')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
+      toast.error(err instanceof Error ? err.message : 'Error')
     }
   }
 
@@ -48,25 +48,25 @@ export function ExcluirDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Excluir equipamento</DialogTitle>
+          <DialogTitle>Delete equipment</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Movimentações e manutenções também serão apagadas. Digite o tombamento{' '}
-          <strong>{equipamento.tombamento}</strong> para confirmar.
+          Transfers and maintenance records will also be deleted. Type the asset tag{' '}
+          <strong>{equipment.assetTag}</strong> to confirm.
         </p>
         <div className="space-y-1">
-          <Label>Tombamento</Label>
+          <Label>Asset tag</Label>
           <Input
-            value={confirmacao}
-            onChange={(e) => setConfirmacao(e.target.value)}
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
           />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            Cancel
           </Button>
-          <Button variant="destructive" disabled={!ok} onClick={() => void submit()}>
-            Excluir
+          <Button variant="destructive" disabled={!matches} onClick={() => void submit()}>
+            Delete
           </Button>
         </DialogFooter>
       </DialogContent>

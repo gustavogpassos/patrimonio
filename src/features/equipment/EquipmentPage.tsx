@@ -1,8 +1,8 @@
 import { EmptyState } from '@/components/EmptyState'
-import { GarantiaBadge } from '@/components/GarantiaBadge'
-import { ManutencaoRegularBadge } from '@/components/ManutencaoRegularBadge'
+import { RegularMaintenanceBadge } from '@/components/RegularMaintenanceBadge'
 import { Pagination } from '@/components/Pagination'
 import { StatusBadge } from '@/components/StatusBadge'
+import { WarrantyBadge } from '@/components/WarrantyBadge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -27,67 +27,67 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { api } from '@/lib/api'
-import { buildEquipamentosCsv, downloadTextFile } from '@/lib/csv'
+import { buildEquipmentCsv, downloadTextFile } from '@/lib/csv'
 import { todayLocal } from '@/lib/dates'
-import type { Categoria, EquipamentoListItem, Setor, StatusEquipamento } from '@/lib/types'
+import type { Category, EquipmentListItem, EquipmentStatus, Sector } from '@/lib/types'
 import { MoreHorizontal } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
-export function EquipamentosPage() {
+export function EquipmentPage() {
   const [params, setParams] = useSearchParams()
   const navigate = useNavigate()
-  const [items, setItems] = useState<EquipamentoListItem[]>([])
+  const [items, setItems] = useState<EquipmentListItem[]>([])
   const [total, setTotal] = useState(0)
-  const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [setores, setSetores] = useState<Setor[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [sectors, setSectors] = useState<Sector[]>([])
   const [qInput, setQInput] = useState(params.get('q') ?? '')
 
   const q = params.get('q') ?? ''
-  const categoriaId = params.get('categoriaId')
-  const setorId = params.get('setorId')
-  const status = params.get('status') as StatusEquipamento | null
+  const categoryId = params.get('categoryId')
+  const sectorId = params.get('sectorId')
+  const status = params.get('status') as EquipmentStatus | null
   const page = Number(params.get('page') ?? '1')
 
-  const hasFilters = Boolean(q || categoriaId || setorId || status)
+  const hasFilters = Boolean(q || categoryId || sectorId || status)
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       const next = new URLSearchParams(params)
       if (qInput) next.set('q', qInput)
       else next.delete('q')
       next.set('page', '1')
       if (qInput !== q) setParams(next)
     }, 300)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [qInput]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    Promise.all([api.listCategorias(true), api.listSetores(true)])
-      .then(([c, s]) => {
-        setCategorias(c)
-        setSetores(s)
+    Promise.all([api.listCategories(true), api.listSectors(true)])
+      .then(([categoryList, sectorList]) => {
+        setCategories(categoryList)
+        setSectors(sectorList)
       })
-      .catch((e) => toast.error(e.message))
+      .catch((err) => toast.error(err.message))
   }, [])
 
   useEffect(() => {
     api
-      .listEquipamentos({
+      .listEquipment({
         q: q || undefined,
-        categoriaId: categoriaId ? Number(categoriaId) : undefined,
-        setorId: setorId ? Number(setorId) : undefined,
+        categoryId: categoryId ? Number(categoryId) : undefined,
+        sectorId: sectorId ? Number(sectorId) : undefined,
         status: status || undefined,
         page,
         pageSize: 20,
       })
-      .then((r) => {
-        setItems(r.items)
-        setTotal(r.total)
+      .then((result) => {
+        setItems(result.items)
+        setTotal(result.total)
       })
-      .catch((e) => toast.error(e.message))
-  }, [q, categoriaId, setorId, status, page])
+      .catch((err) => toast.error(err.message))
+  }, [q, categoryId, sectorId, status, page])
 
   function updateParam(key: string, value: string | null) {
     const next = new URLSearchParams(params)
@@ -104,30 +104,27 @@ export function EquipamentosPage() {
 
   async function exportCsv() {
     try {
-      const all = await api.listEquipamentos({
+      const all = await api.listEquipment({
         q: q || undefined,
-        categoriaId: categoriaId ? Number(categoriaId) : undefined,
-        setorId: setorId ? Number(setorId) : undefined,
+        categoryId: categoryId ? Number(categoryId) : undefined,
+        sectorId: sectorId ? Number(sectorId) : undefined,
         status: status || undefined,
         pageSize: 0,
       })
-      const csv = buildEquipamentosCsv(all.items)
+      const csv = buildEquipmentCsv(all.items)
       downloadTextFile(
-        `patrimonio-equipamentos-${todayLocal()}.csv`,
+        `assets-equipment-${todayLocal()}.csv`,
         csv,
         'text/csv;charset=utf-8',
       )
-      toast.success('CSV exportado')
+      toast.success('CSV exported')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
+      toast.error(err instanceof Error ? err.message : 'Error')
     }
   }
 
   const emptyTitle = useMemo(
-    () =>
-      hasFilters
-        ? 'Nenhum equipamento encontrado'
-        : 'Nenhum equipamento cadastrado',
+    () => (hasFilters ? 'No equipment found' : 'No equipment yet'),
     [hasFilters],
   )
 
@@ -135,15 +132,15 @@ export function EquipamentosPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold">Equipamentos</h2>
-          <p className="text-muted-foreground">Inventário de informática</p>
+          <h2 className="text-2xl font-semibold">Equipment</h2>
+          <p className="text-muted-foreground">IT inventory</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void exportCsv()}>
-            Exportar CSV
+            Export CSV
           </Button>
           <Button asChild>
-            <Link to="/equipamentos/novo">Novo equipamento</Link>
+            <Link to="/equipment/new">New equipment</Link>
           </Button>
         </div>
       </div>
@@ -151,59 +148,59 @@ export function EquipamentosPage() {
       <div className="flex flex-wrap gap-2">
         <Input
           className="max-w-xs"
-          placeholder="Buscar…"
+          placeholder="Search…"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
         />
         <Select
-          value={categoriaId ?? 'all'}
-          onValueChange={(v) => updateParam('categoriaId', v === 'all' ? null : v)}
+          value={categoryId ?? 'all'}
+          onValueChange={(value) => updateParam('categoryId', value === 'all' ? null : value)}
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Categoria" />
+            <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas categorias</SelectItem>
-            {categorias.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                {c.nome}
+            <SelectItem value="all">All categories</SelectItem>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={String(category.id)}>
+                {category.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
-          value={setorId ?? 'all'}
-          onValueChange={(v) => updateParam('setorId', v === 'all' ? null : v)}
+          value={sectorId ?? 'all'}
+          onValueChange={(value) => updateParam('sectorId', value === 'all' ? null : value)}
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Setor" />
+            <SelectValue placeholder="Sector" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos setores</SelectItem>
-            {setores.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>
-                {s.nome}
+            <SelectItem value="all">All sectors</SelectItem>
+            {sectors.map((sector) => (
+              <SelectItem key={sector.id} value={String(sector.id)}>
+                {sector.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
           value={status ?? 'all'}
-          onValueChange={(v) => updateParam('status', v === 'all' ? null : v)}
+          onValueChange={(value) => updateParam('status', value === 'all' ? null : value)}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-44">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos status</SelectItem>
-            <SelectItem value="em_uso">Em uso</SelectItem>
-            <SelectItem value="em_estoque">Em estoque</SelectItem>
-            <SelectItem value="em_manutencao">Em manutenção</SelectItem>
-            <SelectItem value="baixado">Baixado</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="in_use">In use</SelectItem>
+            <SelectItem value="in_stock">In stock</SelectItem>
+            <SelectItem value="in_maintenance">In maintenance</SelectItem>
+            <SelectItem value="written_off">Written off</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="ghost" onClick={clearFilters}>
-          Limpar filtros
+          Clear filters
         </Button>
       </div>
 
@@ -213,7 +210,7 @@ export function EquipamentosPage() {
           action={
             !hasFilters ? (
               <Button asChild>
-                <Link to="/equipamentos/novo">Novo equipamento</Link>
+                <Link to="/equipment/new">New equipment</Link>
               </Button>
             ) : undefined
           }
@@ -223,51 +220,53 @@ export function EquipamentosPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Tombamento</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Setor</TableHead>
+                <TableHead>Asset tag</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Sector</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Garantia</TableHead>
-                <TableHead>Manutenção</TableHead>
+                <TableHead>Warranty</TableHead>
+                <TableHead>Maintenance</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((e) => (
-                <TableRow key={e.id}>
+              {items.map((item) => (
+                <TableRow key={item.id}>
                   <TableCell>
-                    <Link className="font-medium hover:underline" to={`/equipamentos/${e.id}`}>
-                      {e.tombamento}
+                    <Link className="font-medium hover:underline" to={`/equipment/${item.id}`}>
+                      {item.assetTag}
                     </Link>
                   </TableCell>
-                  <TableCell>{e.nome}</TableCell>
+                  <TableCell>{item.name}</TableCell>
                   <TableCell>
-                    {e.categoriaNome}
-                    {!e.categoriaAtivo && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Inativo)</span>
+                    {item.categoryName}
+                    {!item.categoryActive && (
+                      <span className="ml-1 text-xs text-muted-foreground">(Inactive)</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    {e.setorNome}
-                    {!e.setorAtivo && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Inativo)</span>
+                    {item.sectorName}
+                    {!item.sectorActive && (
+                      <span className="ml-1 text-xs text-muted-foreground">(Inactive)</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <StatusBadge status={e.status} />
+                    <StatusBadge status={item.status} />
                   </TableCell>
                   <TableCell>
-                    <GarantiaBadge garantiaAte={e.garantiaAte} />
+                    <WarrantyBadge warrantyUntil={item.warrantyUntil} />
                   </TableCell>
                   <TableCell>
-                    <ManutencaoRegularBadge
-                      intervaloDias={
-                        e.categoriaManutencaoRegular ? e.categoriaIntervaloManutencaoDias : null
+                    <RegularMaintenanceBadge
+                      intervalDays={
+                        item.categoryRegularMaintenance
+                          ? item.categoryMaintenanceIntervalDays
+                          : null
                       }
-                      cadastradoEm={e.createdAt}
-                      ultimaConclusao={e.ultimaManutencaoConclusao}
-                      baixado={e.status === 'baixado'}
+                      registeredAt={item.createdAt}
+                      lastCompletedOn={item.lastMaintenanceCompletedAt}
+                      writtenOff={item.status === 'written_off'}
                     />
                   </TableCell>
                   <TableCell>
@@ -278,13 +277,13 @@ export function EquipamentosPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/equipamentos/${e.id}`)}>
-                          Abrir
+                        <DropdownMenuItem onClick={() => navigate(`/equipment/${item.id}`)}>
+                          Open
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => navigate(`/equipamentos/${e.id}/editar`)}
+                          onClick={() => navigate(`/equipment/${item.id}/edit`)}
                         >
-                          Editar
+                          Edit
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -297,9 +296,9 @@ export function EquipamentosPage() {
             page={page}
             pageSize={20}
             total={total}
-            onPageChange={(p) => {
+            onPageChange={(nextPage) => {
               const next = new URLSearchParams(params)
-              next.set('page', String(p))
+              next.set('page', String(nextPage))
               setParams(next)
             }}
           />
