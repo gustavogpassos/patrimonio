@@ -118,19 +118,19 @@ export type DashboardData = {
 }
 
 export const STATUS_LABELS: Record<EquipmentStatus, string> = {
-  in_use: 'In use',
-  in_stock: 'In stock',
-  in_maintenance: 'In maintenance',
-  written_off: 'Written off',
+  in_use: 'Em uso',
+  in_stock: 'Em estoque',
+  in_maintenance: 'Em manutenção',
+  written_off: 'Baixado',
 }
 
 export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
-  preventive: 'Preventive',
-  corrective: 'Corrective',
+  preventive: 'Preventiva',
+  corrective: 'Corretiva',
 }
 
 export const MAINTENANCE_STATE_LABELS: Record<MaintenanceState, string> = {
-  open: 'Open',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
+  open: 'Aberta',
+  completed: 'Concluída',
+  cancelled: 'Cancelada',
 }

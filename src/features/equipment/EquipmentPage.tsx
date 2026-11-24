@@ -113,18 +113,21 @@ export function EquipmentPage() {
       })
       const csv = buildEquipmentCsv(all.items)
       downloadTextFile(
-        `assets-equipment-${todayLocal()}.csv`,
+        `patrimonio-equipamentos-${todayLocal()}.csv`,
         csv,
         'text/csv;charset=utf-8',
       )
-      toast.success('CSV exported')
+      toast.success('CSV exportado')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
   const emptyTitle = useMemo(
-    () => (hasFilters ? 'No equipment found' : 'No equipment yet'),
+    () =>
+      hasFilters
+        ? 'Nenhum equipamento encontrado'
+        : 'Nenhum equipamento cadastrado',
     [hasFilters],
   )
 
@@ -132,15 +135,15 @@ export function EquipmentPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-semibold">Equipment</h2>
-          <p className="text-muted-foreground">IT inventory</p>
+          <h2 className="text-2xl font-semibold">Equipamentos</h2>
+          <p className="text-muted-foreground">Inventário de informática</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void exportCsv()}>
-            Export CSV
+            Exportar CSV
           </Button>
           <Button asChild>
-            <Link to="/equipment/new">New equipment</Link>
+            <Link to="/equipment/new">Novo equipamento</Link>
           </Button>
         </div>
       </div>
@@ -148,7 +151,7 @@ export function EquipmentPage() {
       <div className="flex flex-wrap gap-2">
         <Input
           className="max-w-xs"
-          placeholder="Search…"
+          placeholder="Buscar…"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
         />
@@ -157,10 +160,10 @@ export function EquipmentPage() {
           onValueChange={(value) => updateParam('categoryId', value === 'all' ? null : value)}
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="all">Todas categorias</SelectItem>
             {categories.map((category) => (
               <SelectItem key={category.id} value={String(category.id)}>
                 {category.name}
@@ -173,10 +176,10 @@ export function EquipmentPage() {
           onValueChange={(value) => updateParam('sectorId', value === 'all' ? null : value)}
         >
           <SelectTrigger className="w-44">
-            <SelectValue placeholder="Sector" />
+            <SelectValue placeholder="Setor" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All sectors</SelectItem>
+            <SelectItem value="all">Todos setores</SelectItem>
             {sectors.map((sector) => (
               <SelectItem key={sector.id} value={String(sector.id)}>
                 {sector.name}
@@ -192,15 +195,15 @@ export function EquipmentPage() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="in_use">In use</SelectItem>
-            <SelectItem value="in_stock">In stock</SelectItem>
-            <SelectItem value="in_maintenance">In maintenance</SelectItem>
-            <SelectItem value="written_off">Written off</SelectItem>
+            <SelectItem value="all">Todos status</SelectItem>
+            <SelectItem value="in_use">Em uso</SelectItem>
+            <SelectItem value="in_stock">Em estoque</SelectItem>
+            <SelectItem value="in_maintenance">Em manutenção</SelectItem>
+            <SelectItem value="written_off">Baixado</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="ghost" onClick={clearFilters}>
-          Clear filters
+          Limpar filtros
         </Button>
       </div>
 
@@ -210,7 +213,7 @@ export function EquipmentPage() {
           action={
             !hasFilters ? (
               <Button asChild>
-                <Link to="/equipment/new">New equipment</Link>
+                <Link to="/equipment/new">Novo equipamento</Link>
               </Button>
             ) : undefined
           }
@@ -220,13 +223,13 @@ export function EquipmentPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Asset tag</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Sector</TableHead>
+                <TableHead>Tombamento</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Setor</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Warranty</TableHead>
-                <TableHead>Maintenance</TableHead>
+                <TableHead>Garantia</TableHead>
+                <TableHead>Manutenção</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -242,13 +245,13 @@ export function EquipmentPage() {
                   <TableCell>
                     {item.categoryName}
                     {!item.categoryActive && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Inactive)</span>
+                      <span className="ml-1 text-xs text-muted-foreground">(Inativo)</span>
                     )}
                   </TableCell>
                   <TableCell>
                     {item.sectorName}
                     {!item.sectorActive && (
-                      <span className="ml-1 text-xs text-muted-foreground">(Inactive)</span>
+                      <span className="ml-1 text-xs text-muted-foreground">(Inativo)</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -278,12 +281,12 @@ export function EquipmentPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => navigate(`/equipment/${item.id}`)}>
-                          Open
+                          Abrir
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => navigate(`/equipment/${item.id}/edit`)}
                         >
-                          Edit
+                          Editar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

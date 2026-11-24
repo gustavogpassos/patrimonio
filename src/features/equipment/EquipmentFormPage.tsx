@@ -82,7 +82,7 @@ export function EquipmentFormPage() {
           setAssetTag(next.assetTag)
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Error')
+        toast.error(err instanceof Error ? err.message : 'Erro')
       } finally {
         setLoading(false)
       }
@@ -96,7 +96,7 @@ export function EquipmentFormPage() {
       try {
         acquisitionValueCents = parseBRLToCents(amount)
       } catch {
-        toast.error('Invalid amount')
+        toast.error('Valor inválido')
         return
       }
 
@@ -116,7 +116,7 @@ export function EquipmentFormPage() {
           warrantyUntil,
           notes,
         })
-        toast.success('Equipment updated')
+        toast.success('Equipamento atualizado')
         navigate(`/equipment/${updated.id}`)
       } else {
         const created = await api.createEquipment({
@@ -137,35 +137,35 @@ export function EquipmentFormPage() {
           warrantyUntil,
           notes,
         })
-        toast.success('Equipment created')
+        toast.success('Equipamento cadastrado')
         navigate(`/equipment/${created.id}`)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
-  if (loading) return <p className="text-muted-foreground">Loading…</p>
+  if (loading) return <p className="text-muted-foreground">Carregando…</p>
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">
-          {isEdit ? 'Edit equipment' : 'New equipment'}
+          {isEdit ? 'Editar equipamento' : 'Novo equipamento'}
         </h2>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Asset tag">
+        <Field label="Tombamento">
           <Input value={assetTag} onChange={(e) => setAssetTag(e.target.value)} />
         </Field>
-        <Field label="Name">
+        <Field label="Nome">
           <Input value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Field label="Category">
+        <Field label="Categoria">
           <Select value={categoryId} onValueChange={setCategoryId}>
             <SelectTrigger>
-              <SelectValue placeholder="Select" />
+              <SelectValue placeholder="Selecione" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
@@ -187,8 +187,8 @@ export function EquipmentFormPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="in_stock">In stock</SelectItem>
-                <SelectItem value="in_use">In use</SelectItem>
+                <SelectItem value="in_stock">Em estoque</SelectItem>
+                <SelectItem value="in_use">Em uso</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -196,24 +196,24 @@ export function EquipmentFormPage() {
 
         {isEdit ? (
           <>
-            <Field label="Sector">
+            <Field label="Setor">
               <Input value={sectorName} disabled />
             </Field>
-            <Field label="Location">
+            <Field label="Localização">
               <Input value={location} disabled />
             </Field>
             {hasOpenMaintenance && (
               <p className="sm:col-span-2 text-sm text-amber-700">
-                Status is locked while maintenance is open.
+                Status travado enquanto houver manutenção aberta.
               </p>
             )}
           </>
         ) : (
           <>
-            <Field label="Sector">
+            <Field label="Setor">
               <Select value={sectorId} onValueChange={setSectorId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
                   {sectors.map((sector) => (
@@ -224,7 +224,7 @@ export function EquipmentFormPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Location">
+            <Field label="Localização">
               <Input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
@@ -233,36 +233,36 @@ export function EquipmentFormPage() {
           </>
         )}
 
-        <Field label="Brand">
+        <Field label="Marca">
           <Input value={brand} onChange={(e) => setBrand(e.target.value)} />
         </Field>
-        <Field label="Model">
+        <Field label="Modelo">
           <Input value={model} onChange={(e) => setModel(e.target.value)} />
         </Field>
-        <Field label="Serial number">
+        <Field label="Número de série">
           <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
         </Field>
-        <Field label="Acquisition date">
+        <Field label="Data de aquisição">
           <Input
             type="date"
             value={acquiredOn}
             onChange={(e) => setAcquiredOn(e.target.value)}
           />
         </Field>
-        <Field label="Amount (R$)">
+        <Field label="Valor (R$)">
           <Input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0,00"
           />
         </Field>
-        <Field label="Supplier">
+        <Field label="Fornecedor">
           <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} />
         </Field>
-        <Field label="Invoice">
+        <Field label="Nota fiscal">
           <Input value={invoice} onChange={(e) => setInvoice(e.target.value)} />
         </Field>
-        <Field label="Warranty until">
+        <Field label="Garantia até">
           <Input
             type="date"
             value={warrantyUntil}
@@ -270,20 +270,20 @@ export function EquipmentFormPage() {
           />
         </Field>
         <div className="sm:col-span-2 space-y-1">
-          <Label>Description</Label>
+          <Label>Descrição</Label>
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         <div className="sm:col-span-2 space-y-1">
-          <Label>Notes</Label>
+          <Label>Observações</Label>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={() => void save()}>Save</Button>
+        <Button onClick={() => void save()}>Salvar</Button>
         <Button variant="outline" asChild>
           <Link to={isEdit && id ? `/equipment/${id}` : '/equipment'}>
-            Cancel
+            Cancelar
           </Link>
         </Button>
       </div>

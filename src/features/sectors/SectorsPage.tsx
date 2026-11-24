@@ -36,7 +36,7 @@ export function SectorsPage() {
     try {
       setItems(await api.listSectors(true))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -68,11 +68,11 @@ export function SectorsPage() {
         description,
         active,
       })
-      toast.success(editing ? 'Sector updated' : 'Sector created')
+      toast.success(editing ? 'Setor atualizado' : 'Setor cadastrado')
       setOpen(false)
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -84,21 +84,21 @@ export function SectorsPage() {
         description: sector.description ?? '',
         active: !sector.active,
       })
-      toast.success(sector.active ? 'Sector deactivated' : 'Sector reactivated')
+      toast.success(sector.active ? 'Setor inativado' : 'Setor reativado')
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
   async function remove(sector: Sector) {
-    if (!window.confirm(`Delete sector "${sector.name}"?`)) return
+    if (!window.confirm(`Excluir o setor "${sector.name}"?`)) return
     try {
       await api.deleteSector(sector.id)
-      toast.success('Sector deleted')
+      toast.success('Setor excluído')
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -106,24 +106,24 @@ export function SectorsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Sectors</h2>
-          <p className="text-muted-foreground">Where the equipment is assigned</p>
+          <h2 className="text-2xl font-semibold">Setores</h2>
+          <p className="text-muted-foreground">Locais onde os equipamentos ficam</p>
         </div>
-        <Button onClick={openNew}>New sector</Button>
+        <Button onClick={openNew}>Novo setor</Button>
       </div>
 
       {items.length === 0 ? (
-        <EmptyState title="No sectors yet" action={<Button onClick={openNew}>New sector</Button>} />
+        <EmptyState title="Nenhum setor cadastrado" action={<Button onClick={openNew}>Novo setor</Button>} />
       ) : (
         <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Equipment</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Equipamentos</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -137,13 +137,13 @@ export function SectorsPage() {
                 </TableCell>
                 <TableCell className="space-x-2 text-right">
                   <Button size="sm" variant="outline" onClick={() => openEdit(sector)}>
-                    Edit
+                    Editar
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => void toggleActive(sector)}>
-                    {sector.active ? 'Deactivate' : 'Reactivate'}
+                    {sector.active ? 'Inativar' : 'Reativar'}
                   </Button>
                   <Button size="sm" variant="destructive" onClick={() => void remove(sector)}>
-                    Delete
+                    Excluir
                   </Button>
                 </TableCell>
               </TableRow>
@@ -156,15 +156,15 @@ export function SectorsPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Edit sector' : 'New sector'}</DialogTitle>
+            <DialogTitle>{editing ? 'Editar setor' : 'Novo setor'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nome</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Descrição</Label>
               <Textarea
                 id="description"
                 value={description}
@@ -177,14 +177,14 @@ export function SectorsPage() {
                 checked={active}
                 onChange={(e) => setActive(e.target.checked)}
               />
-              Active
+              Ativo
             </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              Cancelar
             </Button>
-            <Button onClick={() => void save()}>Save</Button>
+            <Button onClick={() => void save()}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

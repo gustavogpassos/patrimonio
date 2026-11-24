@@ -36,11 +36,11 @@ export function DeleteDialog({
   async function submit() {
     try {
       await api.deleteEquipment(equipment.id, confirmation)
-      toast.success('Equipment deleted')
+      toast.success('Equipamento excluído')
       onOpenChange(false)
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -48,14 +48,14 @@ export function DeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete equipment</DialogTitle>
+          <DialogTitle>Excluir equipamento</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Transfers and maintenance records will also be deleted. Type the asset tag{' '}
-          <strong>{equipment.assetTag}</strong> to confirm.
+          Movimentações e manutenções também serão apagadas. Digite o tombamento{' '}
+          <strong>{equipment.assetTag}</strong> para confirmar.
         </p>
         <div className="space-y-1">
-          <Label>Asset tag</Label>
+          <Label>Tombamento</Label>
           <Input
             value={confirmation}
             onChange={(e) => setConfirmation(e.target.value)}
@@ -63,10 +63,10 @@ export function DeleteDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button variant="destructive" disabled={!matches} onClick={() => void submit()}>
-            Delete
+            Excluir
           </Button>
         </DialogFooter>
       </DialogContent>

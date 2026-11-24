@@ -63,7 +63,7 @@ export function MaintenancePage() {
       setItems(result.items)
       setTotal(result.total)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error')
+      toast.error(err instanceof Error ? err.message : 'Erro')
     }
   }
 
@@ -75,54 +75,54 @@ export function MaintenancePage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Maintenance</h2>
-          <p className="text-muted-foreground">History and open orders</p>
+          <h2 className="text-2xl font-semibold">Manutenções</h2>
+          <p className="text-muted-foreground">Histórico e ordens em aberto</p>
         </div>
-        <Button onClick={() => setOpenNew(true)}>New maintenance</Button>
+        <Button onClick={() => setOpenNew(true)}>Nova manutenção</Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <Input
           className="max-w-xs"
-          placeholder="Search by name or asset tag…"
+          placeholder="Buscar por nome ou tombamento…"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
         />
         <Select value={state} onValueChange={(value) => { setState(value); setPage(1) }}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="State" />
+            <SelectValue placeholder="Situação" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="open">Aberta</SelectItem>
+            <SelectItem value="completed">Concluída</SelectItem>
+            <SelectItem value="cancelled">Cancelada</SelectItem>
           </SelectContent>
         </Select>
         <Select value={type} onValueChange={(value) => { setType(value); setPage(1) }}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Type" />
+            <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="corrective">Corrective</SelectItem>
-            <SelectItem value="preventive">Preventive</SelectItem>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="corrective">Corretiva</SelectItem>
+            <SelectItem value="preventive">Preventiva</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {items.length === 0 ? (
-        <EmptyState title="No maintenance found" />
+        <EmptyState title="Nenhuma manutenção encontrada" />
       ) : (
         <>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Equipment</TableHead>
-                <TableHead>Opened</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead>Problem</TableHead>
+                <TableHead>Equipamento</TableHead>
+                <TableHead>Abertura</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Situação</TableHead>
+                <TableHead>Problema</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -147,10 +147,10 @@ export function MaintenancePage() {
                     {item.state === 'open' && (
                       <>
                         <Button size="sm" variant="outline" onClick={() => setCompleteTarget(item)}>
-                          Complete
+                          Concluir
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setCancelTarget(item)}>
-                          Cancel
+                          Cancelar
                         </Button>
                       </>
                     )}

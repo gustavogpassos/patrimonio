@@ -51,7 +51,7 @@ function errorResponse(err: unknown) {
     return json({ error: err.message }, 400)
   }
   console.error(err)
-  return json({ error: 'Could not complete the operation.' }, 500)
+  return json({ error: 'Não foi possível concluir a operação.' }, 500)
 }
 
 async function parseJson<T>(req: Request): Promise<T> {
@@ -223,7 +223,7 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
 
     if (path === '/api/backup' && method === 'GET') {
       const bytes = await readDatabaseFile()
-      const name = `assets-backup-${todayLocal()}.db`
+      const name = `patrimonio-backup-${todayLocal()}.db`
       return new Response(new Blob([Uint8Array.from(bytes)]), {
         headers: {
           'Content-Type': 'application/octet-stream',
@@ -236,17 +236,17 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
       const form = await req.formData()
       const file = form.get('file')
       if (!(file instanceof File)) {
-        throw new AppError('File is not an Assets database.')
+        throw new AppError('Arquivo não é um banco do Patrimônio.')
       }
       const bytes = new Uint8Array(await file.arrayBuffer())
       await importDatabase(bytes)
       return json({ ok: true })
     }
 
-    return json({ error: 'Route not found.' }, 404)
+    return json({ error: 'Rota não encontrada.' }, 404)
   } catch (err) {
     if (err && typeof err === 'object' && 'name' in err && err.name === 'ZodError') {
-      return json({ error: 'Invalid data.' }, 400)
+      return json({ error: 'Dados inválidos.' }, 400)
     }
     return errorResponse(err)
   }
@@ -280,10 +280,10 @@ Bun.serve({
     }
 
     return new Response(
-      'The interface has not been built yet. Run bun run build or use bun run dev.',
+      'Interface ainda não foi gerada. Rode bun run build ou use bun run dev.',
       { status: 503 },
     )
   },
 })
 
-console.log(`Assets listening on http://0.0.0.0:${PORT}`)
+console.log(`Patrimônio ouvindo em http://0.0.0.0:${PORT}`)

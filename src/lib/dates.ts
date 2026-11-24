@@ -28,22 +28,22 @@ export function daysUntil(iso: string, today = todayLocal()): number {
 }
 
 export type WarrantyInfo =
-  | { kind: 'none'; label: 'No warranty' }
+  | { kind: 'none'; label: 'Sem garantia' }
   | { kind: 'ok'; label: string; days: number }
   | { kind: 'soon'; label: string; days: number }
-  | { kind: 'expired'; label: 'Warranty expired'; days: number }
+  | { kind: 'expired'; label: 'Garantia vencida'; days: number }
 
 export function warrantyInfo(
   warrantyUntil: string | null | undefined,
   today = todayLocal(),
 ): WarrantyInfo {
-  if (!warrantyUntil) return { kind: 'none', label: 'No warranty' }
+  if (!warrantyUntil) return { kind: 'none', label: 'Sem garantia' }
   const days = daysUntil(warrantyUntil, today)
-  if (days < 0) return { kind: 'expired', label: 'Warranty expired', days }
+  if (days < 0) return { kind: 'expired', label: 'Garantia vencida', days }
   if (days <= 30) {
     return {
       kind: 'soon',
-      label: days === 0 ? 'Due today' : `Due in ${days} days`,
+      label: days === 0 ? 'Vence hoje' : `Vence em ${days} dias`,
       days,
     }
   }
@@ -96,13 +96,13 @@ export function regularMaintenanceInfo(input: {
     return { kind: 'ok', dueOn, days, label: formatDate(dueOn) }
   }
   if (days === 0) {
-    return { kind: 'due', dueOn, days, label: 'Maintenance due today' }
+    return { kind: 'due', dueOn, days, label: 'Manutenção hoje' }
   }
   const overdue = -days
   return {
     kind: 'due',
     dueOn,
     days,
-    label: overdue === 1 ? 'Overdue by 1 day' : `Overdue by ${overdue} days`,
+    label: overdue === 1 ? 'Atrasada há 1 dia' : `Atrasada há ${overdue} dias`,
   }
 }

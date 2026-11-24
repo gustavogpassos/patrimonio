@@ -14,7 +14,7 @@ describe('warrantyInfo', () => {
   test('due in 30 days', () => {
     const info = warrantyInfo('2026-12-01', '2026-11-19')
     expect(info.kind).toBe('soon')
-    if (info.kind === 'soon') expect(info.label).toContain('Due in')
+    if (info.kind === 'soon') expect(info.label).toContain('Vence em')
   })
 
   test('ok', () => {
@@ -57,7 +57,7 @@ describe('regularMaintenanceInfo', () => {
     expect(info).toMatchObject({
       kind: 'due',
       dueOn: '2026-01-31',
-      label: 'Maintenance due today',
+      label: 'Manutenção hoje',
     })
   })
 
@@ -79,7 +79,7 @@ describe('regularMaintenanceInfo', () => {
       lastCompletedOn: null,
       today: '2026-02-02',
     })
-    expect(info).toMatchObject({ kind: 'due', label: 'Overdue by 2 days' })
+    expect(info).toMatchObject({ kind: 'due', label: 'Atrasada há 2 dias' })
   })
 
   test('completed maintenance restarts the count', () => {
