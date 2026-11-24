@@ -160,7 +160,7 @@ describe('equipamentos regras', () => {
         dataMovimentacao: '2024-02-01',
         motivo: 'Mesmo lugar',
       }),
-    ).toThrow(/iguais aos atuais/)
+    ).toThrow('Setor e localização de destino são iguais aos atuais.')
 
     const moved = transferirEquipamento(e.id, {
       setorDestinoId: setorB.id,

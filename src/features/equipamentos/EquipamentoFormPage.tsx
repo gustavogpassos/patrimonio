@@ -199,7 +199,7 @@ export function EquipamentoFormPage() {
             <Field label="Setor">
               <Input value={setorNome} disabled />
             </Field>
-            <Field label="Complemento">
+            <Field label="Localização">
               <Input value={complementoLocal} disabled />
             </Field>
             {temManutencaoAberta && (
@@ -224,7 +224,7 @@ export function EquipamentoFormPage() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="Complemento">
+            <Field label="Localização">
               <Input
                 value={complementoLocal}
                 onChange={(e) => setComplementoLocal(e.target.value)}

@@ -430,7 +430,7 @@ export function transferirEquipamento(
     const mesmoComplemento =
       (atual.complementoLocal ?? null) === (complementoDestino ?? null)
     if (mesmoSetor && mesmoComplemento) {
-      throw new AppError('Setor e complemento de destino são iguais aos atuais.')
+      throw new AppError('Setor e localização de destino são iguais aos atuais.')
     }
     if (atual.dataAquisicao && isBefore(input.dataMovimentacao, atual.dataAquisicao)) {
       throw new AppError('Data da movimentação não pode ser anterior à aquisição.')

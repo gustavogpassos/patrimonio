@@ -87,7 +87,7 @@ export function TransferirDialog({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Complemento</Label>
+            <Label>Localização</Label>
             <Input value={complemento} onChange={(e) => setComplemento(e.target.value)} />
           </div>
           <div className="space-y-1">

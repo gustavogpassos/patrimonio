@@ -16,7 +16,7 @@ export function buildEquipamentosCsv(items: EquipamentoListItem[]): string {
     'descrição',
     'categoria',
     'setor',
-    'complemento',
+    'localização',
     'marca',
     'modelo',
     'número de série',

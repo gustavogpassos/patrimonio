@@ -35,6 +35,8 @@ describe('csv', () => {
     const csv = buildEquipamentosCsv([sample])
     expect(csv.startsWith('\uFEFF')).toBe(true)
     expect(csv).toContain(';')
+    expect(csv).toContain('localização')
+    expect(csv).not.toContain('complemento')
     expect(csv).toContain('Em uso')
     expect(csv).toContain('1500,50')
     expect(csv).toContain('"PC; Lab"')

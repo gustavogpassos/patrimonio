@@ -141,7 +141,7 @@ export function EquipamentoDetailPage() {
           </CardHeader>
           <CardContent className="grid gap-2 text-sm">
             <Info label="Setor" value={equip.setorNome} inactive={!equip.setorAtivo} />
-            <Info label="Complemento" value={equip.complementoLocal} />
+            <Info label="Localização" value={equip.complementoLocal} />
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Garantia</span>
               <GarantiaBadge garantiaAte={equip.garantiaAte} />
