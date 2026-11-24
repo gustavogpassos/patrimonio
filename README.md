@@ -1,57 +1,57 @@
-# Patrimônio
+# Assets
 
-Controle de equipamentos de informática: setores, categorias, movimentações e manutenções.
+IT equipment tracking: sectors, categories, transfers, and maintenance.
 
-Um processo Bun serve a interface e a API. O banco fica no arquivo `data/patrimonio.db`.
+One Bun process serves the interface and the API. The database is the file `data/patrimonio.db`.
 
-Cada instalação tem o próprio banco, no computador em que o sistema roda. O repositório público não contém dados de ninguém.
+Each install has its own database, on the computer where the system runs. The public repository contains nobody's data.
 
-## Instalação
+## Install
 
-Num Linux sem Bun, Git ou as demais dependências:
+On a Linux machine without Bun, Git, or the other dependencies:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gustavogpassos/patrimonio/main/install.sh | sudo bash
 ```
 
-O script instala o que faltar, clona o repositório em `/opt/patrimonio`, gera a interface e sobe um serviço na porta `8787`. Na primeira execução, se `data/patrimonio.db` não existir, o sistema cria esse arquivo com as categorias iniciais e sem equipamentos.
+The script installs whatever is missing, clones the repository into `/opt/patrimonio`, builds the interface, and starts a service on port `8787`. On the first run, if `data/patrimonio.db` does not exist, the system creates that file with the initial categories and no equipment.
 
-Sem `sudo`, a instalação fica em `~/patrimonio` e o serviço acompanha a sessão do usuário. Outro diretório: `PATRIMONIO_DIR=/caminho curl ... | bash`.
+Without `sudo`, the install lives in `~/patrimonio` and the service follows the user session. Another directory: `PATRIMONIO_DIR=/path curl ... | bash`.
 
-Abra `http://<ip-deste-computador>:8787` em qualquer máquina da rede. Para mudar a porta, edite `patrimonio.env` na pasta da instalação e rode `./install.sh` de novo.
+Open `http://<this-computer-ip>:8787` from any machine on the network. To change the port, edit `patrimonio.env` in the install directory and run `./install.sh` again.
 
-## Atualização
+## Update
 
-Depois que uma versão nova estiver no GitHub, no diretório da instalação:
+After a new version is on GitHub, from the install directory:
 
 ```bash
 sudo ./install.sh
 ```
 
-O mesmo comando baixa o código publicado, preserva `data/patrimonio.db` e aplica só as migrações que essa instalação ainda não rodou. Em seguida o serviço reinicia. Uma cópia do banco de antes da atualização fica em `data/backups/`, com as cinco mais recentes.
+The same command downloads the published code, keeps `data/patrimonio.db`, and applies only the migrations this install has not run yet. Then the service restarts. A copy of the database from before the update is stored in `data/backups/`, keeping the five most recent.
 
-Quem instalou sem `sudo` atualiza com `./install.sh`, sem `sudo`.
+An install made without `sudo` is updated with `./install.sh`, without `sudo`.
 
-Uma mudança de banco entra como um arquivo novo em `src/db/migrations/`, registrado em `src/db/migrate.ts`. Migração já aplicada não é editada nem executada de novo.
+A database change arrives as a new file in `src/db/migrations/`, registered in `src/db/migrate.ts`. A migration that already ran is not edited and is not executed again.
 
-## Desenvolvimento
+## Development
 
-Requisito: [Bun](https://bun.sh) 1.1+.
+Requirement: [Bun](https://bun.sh) 1.1+.
 
 ```bash
 bun install
 bun run dev
 ```
 
-- Interface: http://127.0.0.1:5173 (Vite, com proxy de `/api`)
+- Interface: http://127.0.0.1:5173 (Vite, with a proxy for `/api`)
 - API: http://127.0.0.1:8787
 
-## Dados
+## Data
 
-- Banco: `data/patrimonio.db` (criado na primeira execução)
-- Backup e restauração: botões no rodapé da barra lateral
+- Database: `data/patrimonio.db` (created on the first run)
+- Backup and restore: buttons at the bottom of the sidebar
 
-## Testes
+## Tests
 
 ```bash
 bun test

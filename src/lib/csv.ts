@@ -1,5 +1,5 @@
 import { formatBRLPlain } from './money'
-import { STATUS_LABELS, type EquipamentoListItem } from './types'
+import { STATUS_LABELS, type EquipmentListItem } from './types'
 
 function escapeCsv(value: string | null | undefined): string {
   const v = value ?? ''
@@ -9,44 +9,44 @@ function escapeCsv(value: string | null | undefined): string {
   return v
 }
 
-export function buildEquipamentosCsv(items: EquipamentoListItem[]): string {
+export function buildEquipmentCsv(items: EquipmentListItem[]): string {
   const header = [
-    'tombamento',
-    'nome',
-    'descrição',
-    'categoria',
-    'setor',
-    'localização',
-    'marca',
-    'modelo',
-    'número de série',
+    'asset tag',
+    'name',
+    'description',
+    'category',
+    'sector',
+    'location',
+    'brand',
+    'model',
+    'serial number',
     'status',
-    'data de aquisição',
-    'valor',
-    'fornecedor',
-    'nota fiscal',
-    'garantia até',
-    'observações',
+    'acquisition date',
+    'amount',
+    'supplier',
+    'invoice',
+    'warranty until',
+    'notes',
   ].join(';')
 
-  const rows = items.map((e) =>
+  const rows = items.map((item) =>
     [
-      escapeCsv(e.tombamento),
-      escapeCsv(e.nome),
-      escapeCsv(e.descricao),
-      escapeCsv(e.categoriaNome),
-      escapeCsv(e.setorNome),
-      escapeCsv(e.complementoLocal),
-      escapeCsv(e.marca),
-      escapeCsv(e.modelo),
-      escapeCsv(e.numeroSerie),
-      escapeCsv(STATUS_LABELS[e.status]),
-      escapeCsv(e.dataAquisicao),
-      escapeCsv(formatBRLPlain(e.valorAquisicaoCentavos)),
-      escapeCsv(e.fornecedor),
-      escapeCsv(e.notaFiscal),
-      escapeCsv(e.garantiaAte),
-      escapeCsv(e.observacoes),
+      escapeCsv(item.assetTag),
+      escapeCsv(item.name),
+      escapeCsv(item.description),
+      escapeCsv(item.categoryName),
+      escapeCsv(item.sectorName),
+      escapeCsv(item.location),
+      escapeCsv(item.brand),
+      escapeCsv(item.model),
+      escapeCsv(item.serialNumber),
+      escapeCsv(STATUS_LABELS[item.status]),
+      escapeCsv(item.acquiredOn),
+      escapeCsv(formatBRLPlain(item.acquisitionValueCents)),
+      escapeCsv(item.supplier),
+      escapeCsv(item.invoice),
+      escapeCsv(item.warrantyUntil),
+      escapeCsv(item.notes),
     ].join(';'),
   )
 

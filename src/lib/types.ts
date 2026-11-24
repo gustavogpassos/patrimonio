@@ -1,98 +1,98 @@
-export type StatusEquipamento = 'em_uso' | 'em_estoque' | 'em_manutencao' | 'baixado'
-export type TipoManutencao = 'preventiva' | 'corretiva'
-export type SituacaoManutencao = 'aberta' | 'concluida' | 'cancelada'
+export type EquipmentStatus = 'in_use' | 'in_stock' | 'in_maintenance' | 'written_off'
+export type MaintenanceType = 'preventive' | 'corrective'
+export type MaintenanceState = 'open' | 'completed' | 'cancelled'
 
-export type Categoria = {
+export type Category = {
   id: number
-  nome: string
-  descricao: string | null
-  ativo: boolean
-  manutencaoRegular: boolean
-  intervaloManutencaoDias: number | null
-  equipamentosCount: number
+  name: string
+  description: string | null
+  active: boolean
+  regularMaintenance: boolean
+  maintenanceIntervalDays: number | null
+  equipmentCount: number
   createdAt: string
   updatedAt: string
 }
 
-export type Setor = {
+export type Sector = {
   id: number
-  nome: string
-  descricao: string | null
-  ativo: boolean
-  equipamentosCount: number
+  name: string
+  description: string | null
+  active: boolean
+  equipmentCount: number
   createdAt: string
   updatedAt: string
 }
 
-export type EquipamentoListItem = {
+export type EquipmentListItem = {
   id: number
-  tombamento: string
-  nome: string
-  descricao: string | null
-  categoriaId: number
-  categoriaNome: string
-  categoriaAtivo: boolean
-  categoriaManutencaoRegular: boolean
-  categoriaIntervaloManutencaoDias: number | null
-  ultimaManutencaoConclusao: string | null
-  setorId: number
-  setorNome: string
-  setorAtivo: boolean
-  complementoLocal: string | null
-  marca: string | null
-  modelo: string | null
-  numeroSerie: string | null
-  status: StatusEquipamento
-  dataAquisicao: string | null
-  valorAquisicaoCentavos: number | null
-  fornecedor: string | null
-  notaFiscal: string | null
-  garantiaAte: string | null
-  observacoes: string | null
-  motivoBaixa: string | null
-  dataBaixa: string | null
+  assetTag: string
+  name: string
+  description: string | null
+  categoryId: number
+  categoryName: string
+  categoryActive: boolean
+  categoryRegularMaintenance: boolean
+  categoryMaintenanceIntervalDays: number | null
+  lastMaintenanceCompletedAt: string | null
+  sectorId: number
+  sectorName: string
+  sectorActive: boolean
+  location: string | null
+  brand: string | null
+  model: string | null
+  serialNumber: string | null
+  status: EquipmentStatus
+  acquiredOn: string | null
+  acquisitionValueCents: number | null
+  supplier: string | null
+  invoice: string | null
+  warrantyUntil: string | null
+  notes: string | null
+  writeOffReason: string | null
+  writtenOffOn: string | null
   createdAt: string
   updatedAt: string
 }
 
-export type Movimentacao = {
+export type Transfer = {
   id: number
-  equipamentoId: number
-  setorOrigemId: number | null
-  setorOrigemNome: string | null
-  setorDestinoId: number
-  setorDestinoNome: string
-  complementoOrigem: string | null
-  complementoDestino: string | null
-  motivo: string
-  dataMovimentacao: string
+  equipmentId: number
+  fromSectorId: number | null
+  fromSectorName: string | null
+  toSectorId: number
+  toSectorName: string
+  fromLocation: string | null
+  toLocation: string | null
+  reason: string
+  transferredOn: string
   createdAt: string
 }
 
-export type Manutencao = {
+export type Maintenance = {
   id: number
-  equipamentoId: number
-  equipamentoNome?: string
-  equipamentoTombamento?: string
-  tipo: TipoManutencao
-  situacao: SituacaoManutencao
-  dataAbertura: string
-  dataConclusao: string | null
-  descricaoProblema: string
-  solucao: string | null
-  custoCentavos: number | null
-  fornecedorAssistencia: string | null
-  motivoCancelamento: string | null
-  statusAnterior: StatusEquipamento
-  statusEquipamentoApos: 'em_uso' | 'em_estoque' | 'baixado' | null
+  equipmentId: number
+  equipmentName?: string
+  equipmentAssetTag?: string
+  type: MaintenanceType
+  state: MaintenanceState
+  openedOn: string
+  completedOn: string | null
+  problem: string
+  solution: string | null
+  costCents: number | null
+  serviceProvider: string | null
+  cancellationReason: string | null
+  previousStatus: EquipmentStatus
+  equipmentStatusAfter: 'in_use' | 'in_stock' | 'written_off' | null
   createdAt: string
   updatedAt: string
 }
 
-export type EquipamentoDetalhe = EquipamentoListItem & {
-  movimentacoes: Movimentacao[]
-  manutencoes: Manutencao[]
-  temManutencaoAberta: boolean
+export type EquipmentDetail = EquipmentListItem & {
+  transfers: Transfer[]
+  maintenance: Maintenance[]
+  hasOpenMaintenance: boolean
 }
 
 export type Paginated<T> = {
@@ -100,37 +100,37 @@ export type Paginated<T> = {
   total: number
 }
 
-export type PainelData = {
-  ativos: number
-  emUso: number
-  emEstoque: number
-  emManutencao: number
-  baixados: number
-  valorTotalCentavos: number
-  garantiasVencidas: EquipamentoListItem[]
-  garantiasAVencer: EquipamentoListItem[]
-  manutencoesRegularesVencidas: EquipamentoListItem[]
-  manutencoesAbertas: Manutencao[]
-  ultimasMovimentacoes: Array<Movimentacao & {
-    equipamentoNome: string
-    equipamentoTombamento: string
+export type DashboardData = {
+  activeCount: number
+  inUse: number
+  inStock: number
+  inMaintenance: number
+  writtenOff: number
+  totalValueCents: number
+  expiredWarranties: EquipmentListItem[]
+  warrantiesDueSoon: EquipmentListItem[]
+  overdueRegularMaintenance: EquipmentListItem[]
+  openMaintenance: Maintenance[]
+  recentTransfers: Array<Transfer & {
+    equipmentName: string
+    equipmentAssetTag: string
   }>
 }
 
-export const STATUS_LABELS: Record<StatusEquipamento, string> = {
-  em_uso: 'Em uso',
-  em_estoque: 'Em estoque',
-  em_manutencao: 'Em manutenção',
-  baixado: 'Baixado',
+export const STATUS_LABELS: Record<EquipmentStatus, string> = {
+  in_use: 'In use',
+  in_stock: 'In stock',
+  in_maintenance: 'In maintenance',
+  written_off: 'Written off',
 }
 
-export const TIPO_MANUTENCAO_LABELS: Record<TipoManutencao, string> = {
-  preventiva: 'Preventiva',
-  corretiva: 'Corretiva',
+export const MAINTENANCE_TYPE_LABELS: Record<MaintenanceType, string> = {
+  preventive: 'Preventive',
+  corrective: 'Corrective',
 }
 
-export const SITUACAO_MANUTENCAO_LABELS: Record<SituacaoManutencao, string> = {
-  aberta: 'Aberta',
-  concluida: 'Concluída',
-  cancelada: 'Cancelada',
+export const MAINTENANCE_STATE_LABELS: Record<MaintenanceState, string> = {
+  open: 'Open',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
 }

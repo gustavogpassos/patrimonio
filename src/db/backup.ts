@@ -20,11 +20,13 @@ export async function importDatabase(bytes: Uint8Array) {
     try {
       const row = probe
         .query<{ name: string }, []>(
-          `SELECT name FROM sqlite_master WHERE type='table' AND name='equipamentos'`,
+          // `equipamentos` is the table name from before the English schema migration.
+          `SELECT name FROM sqlite_master
+           WHERE type='table' AND name IN ('equipment', 'equipamentos')`,
         )
         .get()
       if (!row) {
-        throw new AppError('Arquivo não é um banco do Patrimônio.')
+        throw new AppError('File is not an Assets database.')
       }
     } finally {
       probe.close()
@@ -49,7 +51,7 @@ export async function importDatabase(bytes: Uint8Array) {
       // ignore
     }
     if (err instanceof AppError) throw err
-    throw new AppError('Arquivo não é um banco do Patrimônio.')
+    throw new AppError('File is not an Assets database.')
   } finally {
     if (existsSync(tempPath)) unlinkSync(tempPath)
   }

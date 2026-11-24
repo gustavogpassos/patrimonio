@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Instala ou atualiza o Patrimônio.
+# Installs or updates Assets.
 #
-# Primeira vez, num Linux sem Bun nem Git:
+# First time, on a Linux machine without Bun or Git:
 #   curl -fsSL https://raw.githubusercontent.com/gustavogpassos/patrimonio/main/install.sh | sudo bash
 #
-# Atualização, no diretório da instalação, depois de uma versão nova no GitHub:
+# Update, from the install directory, after a new version is on GitHub:
 #   sudo ./install.sh
 #
-# O banco data/patrimonio.db não vai no repositório. Se não existir, a
-# inicialização cria um arquivo vazio desta instalação. Se existir, o código
-# novo é baixado e só as migrações pendentes são aplicadas.
+# data/patrimonio.db is not in the repository. If it does not exist, startup
+# creates an empty file for this install. If it does, the new code is downloaded
+# and only pending migrations are applied.
 set -euo pipefail
 
 REPO_URL="https://github.com/gustavogpassos/patrimonio.git"
@@ -18,7 +18,7 @@ SERVICE_NAME="patrimonio"
 export PATH="/usr/local/bin:${HOME:-/root}/.bun/bin:${PATH}"
 
 log() { printf '==> %s\n' "$*"; }
-die() { printf 'Erro: %s\n' "$*" >&2; exit 1; }
+die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 
 as_root() {
   if [[ "$(id -u)" -eq 0 ]]; then
@@ -26,7 +26,7 @@ as_root() {
   elif command -v sudo >/dev/null 2>&1; then
     sudo "$@"
   else
-    die "Execute como root ou instale o sudo para preparar o sistema."
+    die "Run as root, or install sudo, to prepare the system."
   fi
 }
 
@@ -37,7 +37,7 @@ install_base_packages() {
   done
   [[ "$missing" -eq 0 ]] && return 0
 
-  log "Instalando curl, git e unzip"
+  log "Installing curl, git, and unzip"
   if command -v apt-get >/dev/null 2>&1; then
     as_root apt-get update -y
     as_root apt-get install -y ca-certificates curl git unzip
@@ -46,7 +46,7 @@ install_base_packages() {
   elif command -v pacman >/dev/null 2>&1; then
     as_root pacman -Sy --noconfirm ca-certificates curl git unzip
   else
-    die "Não reconheci o gerenciador de pacotes. Instale curl, git e unzip e rode de novo."
+    die "Could not recognize the package manager. Install curl, git, and unzip, then run this again."
   fi
 }
 
@@ -64,17 +64,17 @@ bun_bin() {
 
 install_bun() {
   if bun_bin >/dev/null 2>&1; then
-    log "Bun já instalado: $(bun_bin) ($( "$(bun_bin)" --version ))"
+    log "Bun already installed: $(bun_bin) ($( "$(bun_bin)" --version ))"
     return 0
   fi
-  log "Instalando Bun"
+  log "Installing Bun"
   if [[ "$(id -u)" -eq 0 ]]; then
     curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
   else
     curl -fsSL https://bun.sh/install | bash
     export PATH="${HOME}/.bun/bin:${PATH}"
   fi
-  bun_bin >/dev/null 2>&1 || die "O Bun não ficou disponível depois da instalação."
+  bun_bin >/dev/null 2>&1 || die "Bun is not available after installation."
 }
 
 resolve_install_dir() {
@@ -118,7 +118,7 @@ ensure_service_user() {
     return 0
   fi
   if ! id patrimonio >/dev/null 2>&1; then
-    log "Criando o usuário de sistema patrimonio"
+    log "Creating the patrimonio system user"
     local nologin="/usr/sbin/nologin"
     [[ -x "$nologin" ]] || nologin="/sbin/nologin"
     [[ -x "$nologin" ]] || nologin="/usr/bin/false"
@@ -142,22 +142,22 @@ sync_code() {
   local dir="$1"
   local owner="$2"
   if [[ -d "$dir/.git" ]]; then
-    [[ -w "$dir/.git" || "$(id -u)" -eq 0 ]] || die "Sem permissão para atualizar ${dir}. Rode: sudo ./install.sh"
+    [[ -w "$dir/.git" || "$(id -u)" -eq 0 ]] || die "No permission to update ${dir}. Run: sudo ./install.sh"
     local remote
     remote="$(git -C "$dir" -c "safe.directory=${dir}" remote get-url origin 2>/dev/null || true)"
     case "$remote" in
       *github.com[:/]gustavogpassos/patrimonio*) ;;
-      *) die "O diretório ${dir} não é um clone de ${REPO_URL}." ;;
+      *) die "Directory ${dir} is not a clone of ${REPO_URL}." ;;
     esac
-    log "Baixando a versão publicada em ${dir}"
+    log "Downloading the published version into ${dir}"
     run_as_owner "$owner" "$dir" git -c "safe.directory=${dir}" fetch origin "$BRANCH"
     run_as_owner "$owner" "$dir" git -c "safe.directory=${dir}" checkout -f -B "$BRANCH" "origin/${BRANCH}"
     return 0
   fi
   if [[ -e "$dir" ]] && [[ -n "$(ls -A "$dir" 2>/dev/null || true)" ]]; then
-    die "${dir} já existe e não é uma instalação do Patrimônio."
+    die "${dir} already exists and is not an Assets install."
   fi
-  log "Clonando ${REPO_URL} em ${dir}"
+  log "Cloning ${REPO_URL} into ${dir}"
   mkdir -p "$dir"
   if [[ "$(id -u)" -eq 0 && "$owner" != "root" ]]; then
     chown "$owner:" "$dir"
@@ -208,7 +208,7 @@ backup_database() {
   if [[ "$(id -un)" != "$owner" ]]; then
     chown -R "$owner:" "$backup_dir"
   fi
-  log "Cópia do banco antes da atualização: ${backup}"
+  log "Database copy before the update: ${backup}"
   mapfile -t old < <(find "$backup_dir" -maxdepth 1 -type f -name 'patrimonio-*.db' -printf '%T@ %p\n' | sort -nr | awk 'NR>5 { print $2 }')
   if [[ "${#old[@]}" -gt 0 ]]; then
     rm -f "${old[@]}"
@@ -221,9 +221,9 @@ apply_migrations() {
   local bun="$3"
   local db="$dir/data/patrimonio.db"
   if [[ -f "$db" ]]; then
-    log "Banco existente em ${db}. Os dados ficam; só entram migrações pendentes."
+    log "Existing database at ${db}. Data stays; only pending migrations are applied."
   else
-    log "Nenhum banco ainda. Criando ${db} nesta instalação."
+    log "No database yet. Creating ${db} for this install."
   fi
   run_as_owner "$owner" "$dir" "$bun" -e 'import { openDatabase } from "./src/db/sqlite.ts"; const db = openDatabase(); db.close()'
 }
@@ -258,7 +258,7 @@ install_service() {
   group="$(id -gn "$owner")"
   unit="$(cat <<EOF
 [Unit]
-Description=Patrimônio
+Description=Assets
 After=network-online.target
 Wants=network-online.target
 
@@ -290,7 +290,7 @@ EOF
   if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
     unit="$(cat <<EOF
 [Unit]
-Description=Patrimônio
+Description=Assets
 After=network-online.target
 Wants=network-online.target
 
@@ -313,12 +313,12 @@ EOF
     systemctl --user restart "${SERVICE_NAME}.service"
     if command -v loginctl >/dev/null 2>&1; then
       loginctl enable-linger "$(id -un)" >/dev/null 2>&1 || sudo -n loginctl enable-linger "$(id -un)" >/dev/null 2>&1 || \
-        log "O serviço sobe nesta sessão. Para continuar depois de sair, rode: sudo loginctl enable-linger $(id -un)"
+        log "The service starts for this session. To keep it after logout, run: sudo loginctl enable-linger $(id -un)"
     fi
     return 0
   fi
 
-  log "systemd não está disponível. Subindo o processo em segundo plano."
+  log "systemd is not available. Starting the process in the background."
   local log_file="$dir/data/patrimonio.log"
   mkdir -p "$dir/data"
   (
@@ -355,7 +355,7 @@ main() {
   before="$(db_fingerprint "$dir")"
   sync_code "$dir" "$owner"
   after="$(db_fingerprint "$dir")"
-  [[ "$before" == "$after" ]] || die "A troca de versão alterou ${dir}/data/patrimonio.db. A instalação parou antes de mexer no serviço."
+  [[ "$before" == "$after" ]] || die "The version switch changed ${dir}/data/patrimonio.db. Install stopped before touching the service."
 
   if [[ "${PATRIMONIO_INNER:-}" != 1 ]]; then
     export PATRIMONIO_INNER=1
@@ -368,43 +368,43 @@ main() {
   local port
   port="$(read_port "$dir")"
 
-  log "Parando a versão que estiver no ar"
+  log "Stopping the version that is running"
   stop_previous "$dir"
 
-  log "Instalando dependências e gerando a interface"
+  log "Installing dependencies and building the interface"
   if ! run_as_owner "$owner" "$dir" "$bun" install; then
     install_service "$dir" "$owner" "$bun" "$port" || true
-    die "bun install falhou. Se havia uma versão no ar, a subida foi tentada de novo."
+    die "bun install failed. If a version was running, startup was tried again."
   fi
   if ! run_as_owner "$owner" "$dir" "$bun" run build; then
     install_service "$dir" "$owner" "$bun" "$port" || true
-    die "A compilação falhou. Se havia uma versão no ar, a subida foi tentada de novo."
+    die "The build failed. If a version was running, startup was tried again."
   fi
 
   backup_database "$dir" "$owner" "$bun"
   if ! apply_migrations "$dir" "$owner" "$bun"; then
-    die "A migração do banco falhou. O arquivo ${dir}/data/patrimonio.db foi mantido e, se já existia, há uma cópia em ${dir}/data/backups/."
+    die "The database migration failed. ${dir}/data/patrimonio.db was kept and, if it already existed, there is a copy in ${dir}/data/backups/."
   fi
 
-  log "Subindo o serviço na porta ${port}"
+  log "Starting the service on port ${port}"
   install_service "$dir" "$owner" "$bun" "$port"
   if ! wait_until_up "$port"; then
     if [[ "$(id -u)" -eq 0 ]]; then
       journalctl -u "${SERVICE_NAME}.service" -n 40 --no-pager || true
     fi
-    die "O processo não respondeu em http://127.0.0.1:${port}/."
+    die "The process did not respond at http://127.0.0.1:${port}/."
   fi
 
   local ip
   ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
   [[ -n "$ip" ]] || ip="127.0.0.1"
-  log "Patrimônio no ar: http://${ip}:${port}"
-  log "Instalação: ${dir}"
-  log "Banco desta máquina: ${dir}/data/patrimonio.db"
+  log "Assets is up: http://${ip}:${port}"
+  log "Install: ${dir}"
+  log "Database on this machine: ${dir}/data/patrimonio.db"
   if [[ -f "$dir/data/patrimonio.db" && "$before" != missing ]]; then
-    log "Atualização concluída. Os dados que já estavam no banco continuam nele."
+    log "Update finished. Data that was already in the database is still there."
   else
-    log "Primeira inicialização. O banco foi criado vazio, só com as categorias iniciais."
+    log "First startup. The database was created empty, with only the initial categories."
   fi
 }
 

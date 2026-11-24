@@ -6,7 +6,7 @@ export function todayLocal(): string {
   return `${y}-${m}-${day}`
 }
 
-export function formatDatePt(iso: string | null | undefined): string {
+export function formatDate(iso: string | null | undefined): string {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-')
   if (!y || !m || !d) return iso
@@ -27,27 +27,27 @@ export function daysUntil(iso: string, today = todayLocal()): number {
   return Math.round((b - a) / 86_400_000)
 }
 
-export type GarantiaInfo =
-  | { kind: 'none'; label: 'Sem garantia' }
+export type WarrantyInfo =
+  | { kind: 'none'; label: 'No warranty' }
   | { kind: 'ok'; label: string; days: number }
   | { kind: 'soon'; label: string; days: number }
-  | { kind: 'expired'; label: 'Garantia vencida'; days: number }
+  | { kind: 'expired'; label: 'Warranty expired'; days: number }
 
-export function garantiaInfo(
-  garantiaAte: string | null | undefined,
+export function warrantyInfo(
+  warrantyUntil: string | null | undefined,
   today = todayLocal(),
-): GarantiaInfo {
-  if (!garantiaAte) return { kind: 'none', label: 'Sem garantia' }
-  const days = daysUntil(garantiaAte, today)
-  if (days < 0) return { kind: 'expired', label: 'Garantia vencida', days }
+): WarrantyInfo {
+  if (!warrantyUntil) return { kind: 'none', label: 'No warranty' }
+  const days = daysUntil(warrantyUntil, today)
+  if (days < 0) return { kind: 'expired', label: 'Warranty expired', days }
   if (days <= 30) {
     return {
       kind: 'soon',
-      label: days === 0 ? 'Vence hoje' : `Vence em ${days} dias`,
+      label: days === 0 ? 'Due today' : `Due in ${days} days`,
       days,
     }
   }
-  return { kind: 'ok', label: formatDatePt(garantiaAte), days }
+  return { kind: 'ok', label: formatDate(warrantyUntil), days }
 }
 
 export function isFutureDate(iso: string, today = todayLocal()): boolean {
@@ -71,38 +71,38 @@ export function addDays(isoDate: string, days: number): string {
   return `${y}-${m}-${day}`
 }
 
-export type ManutencaoRegularInfo =
+export type RegularMaintenanceInfo =
   | { kind: 'none' }
-  | { kind: 'ok'; vencimento: string; days: number; label: string }
-  | { kind: 'due'; vencimento: string; days: number; label: string }
+  | { kind: 'ok'; dueOn: string; days: number; label: string }
+  | { kind: 'due'; dueOn: string; days: number; label: string }
 
-export function manutencaoRegularInfo(input: {
-  intervaloDias: number | null | undefined
-  cadastradoEm: string
-  ultimaConclusao: string | null
+export function regularMaintenanceInfo(input: {
+  intervalDays: number | null | undefined
+  registeredAt: string
+  lastCompletedOn: string | null
   today?: string
-  baixado?: boolean
-}): ManutencaoRegularInfo {
-  if (input.baixado || input.intervaloDias == null || input.intervaloDias < 1) {
+  writtenOff?: boolean
+}): RegularMaintenanceInfo {
+  if (input.writtenOff || input.intervalDays == null || input.intervalDays < 1) {
     return { kind: 'none' }
   }
-  const ancora = input.ultimaConclusao
-    ? dateOnly(input.ultimaConclusao)
-    : dateOnly(input.cadastradoEm)
-  const vencimento = addDays(ancora, input.intervaloDias)
+  const anchor = input.lastCompletedOn
+    ? dateOnly(input.lastCompletedOn)
+    : dateOnly(input.registeredAt)
+  const dueOn = addDays(anchor, input.intervalDays)
   const today = input.today ?? todayLocal()
-  const days = daysUntil(vencimento, today)
+  const days = daysUntil(dueOn, today)
   if (days > 0) {
-    return { kind: 'ok', vencimento, days, label: formatDatePt(vencimento) }
+    return { kind: 'ok', dueOn, days, label: formatDate(dueOn) }
   }
   if (days === 0) {
-    return { kind: 'due', vencimento, days, label: 'Manutenção hoje' }
+    return { kind: 'due', dueOn, days, label: 'Maintenance due today' }
   }
-  const atraso = -days
+  const overdue = -days
   return {
     kind: 'due',
-    vencimento,
+    dueOn,
     days,
-    label: atraso === 1 ? 'Atrasada há 1 dia' : `Atrasada há ${atraso} dias`,
+    label: overdue === 1 ? 'Overdue by 1 day' : `Overdue by ${overdue} days`,
   }
 }

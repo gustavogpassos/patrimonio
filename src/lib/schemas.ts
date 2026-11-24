@@ -8,7 +8,7 @@ const optionalText = (max: number) =>
       const t = v.trim()
       return t.length === 0 ? null : t
     })
-    .refine((v) => v == null || v.length <= max, { message: `Máximo de ${max} caracteres` })
+    .refine((v) => v == null || v.length <= max, { message: `At most ${max} characters` })
 
 const requiredText = (min: number, max: number) =>
   z
@@ -18,7 +18,7 @@ const requiredText = (min: number, max: number) =>
 
 const dateString = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida')
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date')
 
 const optionalDate = z
   .union([z.string(), z.null(), z.undefined()])
@@ -28,102 +28,102 @@ const optionalDate = z
     return t.length === 0 ? null : t
   })
   .refine((v) => v == null || /^\d{4}-\d{2}-\d{2}$/.test(v), {
-    message: 'Data inválida',
+    message: 'Invalid date',
   })
 
-export const setorSchema = z.object({
-  nome: requiredText(2, 80),
-  descricao: optionalText(500),
-  ativo: z.boolean().default(true),
+export const sectorSchema = z.object({
+  name: requiredText(2, 80),
+  description: optionalText(500),
+  active: z.boolean().default(true),
 })
 
-export const categoriaSchema = z.object({
-  nome: requiredText(2, 80),
-  descricao: optionalText(500),
-  ativo: z.boolean().default(true),
-  manutencaoRegular: z.boolean().default(false),
-  intervaloManutencaoDias: z.number().int().min(1).max(3650).nullable().optional(),
+export const categorySchema = z.object({
+  name: requiredText(2, 80),
+  description: optionalText(500),
+  active: z.boolean().default(true),
+  regularMaintenance: z.boolean().default(false),
+  maintenanceIntervalDays: z.number().int().min(1).max(3650).nullable().optional(),
 })
 
-export const createEquipamentoSchema = z.object({
-  tombamento: requiredText(2, 40),
-  nome: requiredText(2, 120),
-  descricao: optionalText(2000),
-  categoriaId: z.number().int().positive(),
-  setorId: z.number().int().positive(),
-  complementoLocal: optionalText(120),
-  marca: optionalText(80),
-  modelo: optionalText(80),
-  numeroSerie: optionalText(80),
-  status: z.enum(['em_estoque', 'em_uso']),
-  dataAquisicao: optionalDate,
-  valorAquisicaoCentavos: z.number().int().min(0).nullable().optional(),
-  fornecedor: optionalText(120),
-  notaFiscal: optionalText(120),
-  garantiaAte: optionalDate,
-  observacoes: optionalText(2000),
+export const createEquipmentSchema = z.object({
+  assetTag: requiredText(2, 40),
+  name: requiredText(2, 120),
+  description: optionalText(2000),
+  categoryId: z.number().int().positive(),
+  sectorId: z.number().int().positive(),
+  location: optionalText(120),
+  brand: optionalText(80),
+  model: optionalText(80),
+  serialNumber: optionalText(80),
+  status: z.enum(['in_stock', 'in_use']),
+  acquiredOn: optionalDate,
+  acquisitionValueCents: z.number().int().min(0).nullable().optional(),
+  supplier: optionalText(120),
+  invoice: optionalText(120),
+  warrantyUntil: optionalDate,
+  notes: optionalText(2000),
 })
 
-export const updateEquipamentoSchema = z.object({
-  tombamento: requiredText(2, 40),
-  nome: requiredText(2, 120),
-  descricao: optionalText(2000),
-  categoriaId: z.number().int().positive(),
-  marca: optionalText(80),
-  modelo: optionalText(80),
-  numeroSerie: optionalText(80),
-  dataAquisicao: optionalDate,
-  valorAquisicaoCentavos: z.number().int().min(0).nullable().optional(),
-  fornecedor: optionalText(120),
-  notaFiscal: optionalText(120),
-  garantiaAte: optionalDate,
-  observacoes: optionalText(2000),
+export const updateEquipmentSchema = z.object({
+  assetTag: requiredText(2, 40),
+  name: requiredText(2, 120),
+  description: optionalText(2000),
+  categoryId: z.number().int().positive(),
+  brand: optionalText(80),
+  model: optionalText(80),
+  serialNumber: optionalText(80),
+  acquiredOn: optionalDate,
+  acquisitionValueCents: z.number().int().min(0).nullable().optional(),
+  supplier: optionalText(120),
+  invoice: optionalText(120),
+  warrantyUntil: optionalDate,
+  notes: optionalText(2000),
 })
 
-export const transferirSchema = z.object({
-  setorDestinoId: z.number().int().positive(),
-  complementoDestino: optionalText(120),
-  dataMovimentacao: dateString,
-  motivo: requiredText(3, 300),
+export const transferSchema = z.object({
+  toSectorId: z.number().int().positive(),
+  toLocation: optionalText(120),
+  transferredOn: dateString,
+  reason: requiredText(3, 300),
 })
 
-export const baixarSchema = z.object({
-  dataBaixa: dateString,
-  motivoBaixa: requiredText(3, 300),
+export const writeOffSchema = z.object({
+  writtenOffOn: dateString,
+  writeOffReason: requiredText(3, 300),
 })
 
-export const excluirSchema = z.object({
-  tombamentoConfirmacao: requiredText(2, 40),
+export const deleteEquipmentSchema = z.object({
+  assetTagConfirmation: requiredText(2, 40),
 })
 
-export const abrirManutencaoSchema = z.object({
-  equipamentoId: z.number().int().positive(),
-  tipo: z.enum(['preventiva', 'corretiva']),
-  dataAbertura: dateString,
-  descricaoProblema: requiredText(3, 2000),
-  custoCentavos: z.number().int().min(0).nullable().optional(),
-  fornecedorAssistencia: optionalText(120),
+export const openMaintenanceSchema = z.object({
+  equipmentId: z.number().int().positive(),
+  type: z.enum(['preventive', 'corrective']),
+  openedOn: dateString,
+  problem: requiredText(3, 2000),
+  costCents: z.number().int().min(0).nullable().optional(),
+  serviceProvider: optionalText(120),
 })
 
-export const concluirManutencaoSchema = z.object({
-  dataConclusao: dateString,
-  solucao: requiredText(3, 2000),
-  custoCentavos: z.number().int().min(0).nullable().optional(),
-  fornecedorAssistencia: optionalText(120),
-  statusEquipamentoApos: z.enum(['em_uso', 'em_estoque', 'baixado']),
-  motivoBaixa: z.string().optional().nullable(),
+export const completeMaintenanceSchema = z.object({
+  completedOn: dateString,
+  solution: requiredText(3, 2000),
+  costCents: z.number().int().min(0).nullable().optional(),
+  serviceProvider: optionalText(120),
+  equipmentStatusAfter: z.enum(['in_use', 'in_stock', 'written_off']),
+  writeOffReason: z.string().optional().nullable(),
 })
 
-export const cancelarManutencaoSchema = z.object({
-  motivoCancelamento: requiredText(3, 300),
+export const cancelMaintenanceSchema = z.object({
+  cancellationReason: requiredText(3, 300),
 })
 
-export type SetorInput = z.infer<typeof setorSchema>
-export type CategoriaInput = z.infer<typeof categoriaSchema>
-export type CreateEquipamentoInput = z.infer<typeof createEquipamentoSchema>
-export type UpdateEquipamentoInput = z.infer<typeof updateEquipamentoSchema>
-export type TransferirInput = z.infer<typeof transferirSchema>
-export type BaixarInput = z.infer<typeof baixarSchema>
-export type AbrirManutencaoInput = z.infer<typeof abrirManutencaoSchema>
-export type ConcluirManutencaoInput = z.infer<typeof concluirManutencaoSchema>
-export type CancelarManutencaoInput = z.infer<typeof cancelarManutencaoSchema>
+export type SectorInput = z.infer<typeof sectorSchema>
+export type CategoryInput = z.infer<typeof categorySchema>
+export type CreateEquipmentInput = z.infer<typeof createEquipmentSchema>
+export type UpdateEquipmentInput = z.infer<typeof updateEquipmentSchema>
+export type TransferInput = z.infer<typeof transferSchema>
+export type WriteOffInput = z.infer<typeof writeOffSchema>
+export type OpenMaintenanceInput = z.infer<typeof openMaintenanceSchema>
+export type CompleteMaintenanceInput = z.infer<typeof completeMaintenanceSchema>
+export type CancelMaintenanceInput = z.infer<typeof cancelMaintenanceSchema>
