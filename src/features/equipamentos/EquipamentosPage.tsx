@@ -1,5 +1,6 @@
 import { EmptyState } from '@/components/EmptyState'
 import { GarantiaBadge } from '@/components/GarantiaBadge'
+import { ManutencaoRegularBadge } from '@/components/ManutencaoRegularBadge'
 import { Pagination } from '@/components/Pagination'
 import { StatusBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -228,6 +229,7 @@ export function EquipamentosPage() {
                 <TableHead>Setor</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Garantia</TableHead>
+                <TableHead>Manutenção</TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -257,6 +259,16 @@ export function EquipamentosPage() {
                   </TableCell>
                   <TableCell>
                     <GarantiaBadge garantiaAte={e.garantiaAte} />
+                  </TableCell>
+                  <TableCell>
+                    <ManutencaoRegularBadge
+                      intervaloDias={
+                        e.categoriaManutencaoRegular ? e.categoriaIntervaloManutencaoDias : null
+                      }
+                      cadastradoEm={e.createdAt}
+                      ultimaConclusao={e.ultimaManutencaoConclusao}
+                      baixado={e.status === 'baixado'}
+                    />
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>

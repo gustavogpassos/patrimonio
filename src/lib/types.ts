@@ -7,6 +7,8 @@ export type Categoria = {
   nome: string
   descricao: string | null
   ativo: boolean
+  manutencaoRegular: boolean
+  intervaloManutencaoDias: number | null
   equipamentosCount: number
   createdAt: string
   updatedAt: string
@@ -30,6 +32,9 @@ export type EquipamentoListItem = {
   categoriaId: number
   categoriaNome: string
   categoriaAtivo: boolean
+  categoriaManutencaoRegular: boolean
+  categoriaIntervaloManutencaoDias: number | null
+  ultimaManutencaoConclusao: string | null
   setorId: number
   setorNome: string
   setorAtivo: boolean
@@ -104,6 +109,7 @@ export type PainelData = {
   valorTotalCentavos: number
   garantiasVencidas: EquipamentoListItem[]
   garantiasAVencer: EquipamentoListItem[]
+  manutencoesRegularesVencidas: EquipamentoListItem[]
   manutencoesAbertas: Manutencao[]
   ultimasMovimentacoes: Array<Movimentacao & {
     equipamentoNome: string

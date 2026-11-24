@@ -8,6 +8,8 @@ type Row = {
   nome: string
   descricao: string | null
   ativo: number
+  manutencao_regular: number
+  intervalo_manutencao_dias: number | null
   equipamentos_count: number
   created_at: string
   updated_at: string
@@ -19,6 +21,8 @@ function mapRow(r: Row): Categoria {
     nome: r.nome,
     descricao: r.descricao,
     ativo: r.ativo === 1,
+    manutencaoRegular: r.manutencao_regular === 1,
+    intervaloManutencaoDias: r.intervalo_manutencao_dias,
     equipamentosCount: r.equipamentos_count,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -47,24 +51,40 @@ export function saveCategoria(input: CategoriaInput & { id?: number }): Categori
     const nome = input.nome.trim()
     const descricao = nullIfEmpty(input.descricao)
     const ativo = input.ativo ? 1 : 0
+    const manutencaoRegular = input.manutencaoRegular ? 1 : 0
+    const intervalo = intervaloDaCategoria(input)
 
     if (input.id) {
       db.query(
         `UPDATE categorias
-         SET nome = ?, descricao = ?, ativo = ?, updated_at = datetime('now','localtime')
+         SET nome = ?, descricao = ?, ativo = ?,
+             manutencao_regular = ?, intervalo_manutencao_dias = ?,
+             updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(nome, descricao, ativo, input.id)
+      ).run(nome, descricao, ativo, manutencaoRegular, intervalo, input.id)
       return getCategoria(input.id)
     }
 
     const result = db
       .query(
-        `INSERT INTO categorias (nome, descricao, ativo, created_at, updated_at)
-         VALUES (?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
+        `INSERT INTO categorias (
+           nome, descricao, ativo, manutencao_regular, intervalo_manutencao_dias,
+           created_at, updated_at
+         )
+         VALUES (?, ?, ?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
       )
-      .run(nome, descricao, ativo)
+      .run(nome, descricao, ativo, manutencaoRegular, intervalo)
     return getCategoria(Number(result.lastInsertRowid))
   })
+}
+
+function intervaloDaCategoria(input: CategoriaInput): number | null {
+  if (!input.manutencaoRegular) return null
+  const dias = input.intervaloManutencaoDias
+  if (dias == null || !Number.isInteger(dias) || dias < 1 || dias > 3650) {
+    throw new AppError('Informe a frequência da manutenção regular, em dias.')
+  }
+  return dias
 }
 
 export function getCategoria(id: number): Categoria {

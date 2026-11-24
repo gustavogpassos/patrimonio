@@ -24,6 +24,9 @@ type EquipRow = {
   categoria_id: number
   categoria_nome: string
   categoria_ativo: number
+  categoria_manutencao_regular: number
+  categoria_intervalo_manutencao_dias: number | null
+  ultima_manutencao_conclusao: string | null
   setor_id: number
   setor_nome: string
   setor_ativo: number
@@ -48,6 +51,13 @@ const EQUIP_SELECT = `
   SELECT e.*,
     c.nome AS categoria_nome,
     c.ativo AS categoria_ativo,
+    c.manutencao_regular AS categoria_manutencao_regular,
+    c.intervalo_manutencao_dias AS categoria_intervalo_manutencao_dias,
+    (
+      SELECT MAX(m.data_conclusao)
+      FROM manutencoes m
+      WHERE m.equipamento_id = e.id AND m.situacao = 'concluida'
+    ) AS ultima_manutencao_conclusao,
     s.nome AS setor_nome,
     s.ativo AS setor_ativo
   FROM equipamentos e
@@ -64,6 +74,9 @@ function mapEquip(r: EquipRow): EquipamentoListItem {
     categoriaId: r.categoria_id,
     categoriaNome: r.categoria_nome,
     categoriaAtivo: r.categoria_ativo === 1,
+    categoriaManutencaoRegular: r.categoria_manutencao_regular === 1,
+    categoriaIntervaloManutencaoDias: r.categoria_intervalo_manutencao_dias,
+    ultimaManutencaoConclusao: r.ultima_manutencao_conclusao,
     setorId: r.setor_id,
     setorNome: r.setor_nome,
     setorAtivo: r.setor_ativo === 1,
@@ -430,7 +443,7 @@ export function transferirEquipamento(
     const mesmoComplemento =
       (atual.complementoLocal ?? null) === (complementoDestino ?? null)
     if (mesmoSetor && mesmoComplemento) {
-      throw new AppError('Setor e complemento de destino são iguais aos atuais.')
+      throw new AppError('Setor e localização de destino são iguais aos atuais.')
     }
     if (atual.dataAquisicao && isBefore(input.dataMovimentacao, atual.dataAquisicao)) {
       throw new AppError('Data da movimentação não pode ser anterior à aquisição.')

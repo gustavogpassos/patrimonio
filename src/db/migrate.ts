@@ -8,6 +8,11 @@ const MIGRATIONS: Array<{ version: number; description: string; file: string }> 
     description: 'schema inicial',
     file: '001_init.sql',
   },
+  {
+    version: 2,
+    description: 'manutenção regular na categoria',
+    file: '002_manutencao_regular.sql',
+  },
 ]
 
 export function migrate(db: Database) {
