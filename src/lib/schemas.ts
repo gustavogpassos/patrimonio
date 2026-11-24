@@ -41,6 +41,8 @@ export const categoriaSchema = z.object({
   nome: requiredText(2, 80),
   descricao: optionalText(500),
   ativo: z.boolean().default(true),
+  manutencaoRegular: z.boolean().default(false),
+  intervaloManutencaoDias: z.number().int().min(1).max(3650).nullable().optional(),
 })
 
 export const createEquipamentoSchema = z.object({

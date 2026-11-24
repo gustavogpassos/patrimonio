@@ -1,4 +1,5 @@
 import { GarantiaBadge } from '@/components/GarantiaBadge'
+import { ManutencaoRegularBadge } from '@/components/ManutencaoRegularBadge'
 import { SituacaoBadge, StatusBadge } from '@/components/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -145,6 +146,17 @@ export function EquipamentoDetailPage() {
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Garantia</span>
               <GarantiaBadge garantiaAte={equip.garantiaAte} />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">Manutenção regular</span>
+              <ManutencaoRegularBadge
+                intervaloDias={
+                  equip.categoriaManutencaoRegular ? equip.categoriaIntervaloManutencaoDias : null
+                }
+                cadastradoEm={equip.createdAt}
+                ultimaConclusao={equip.ultimaManutencaoConclusao}
+                baixado={equip.status === 'baixado'}
+              />
             </div>
           </CardContent>
         </Card>

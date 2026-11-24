@@ -57,3 +57,52 @@ export function isFutureDate(iso: string, today = todayLocal()): boolean {
 export function isBefore(a: string, b: string): boolean {
   return a < b
 }
+
+export function dateOnly(iso: string): string {
+  return iso.slice(0, 10)
+}
+
+export function addDays(isoDate: string, days: number): string {
+  const d = new Date(`${dateOnly(isoDate)}T12:00:00`)
+  d.setDate(d.getDate() + days)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+export type ManutencaoRegularInfo =
+  | { kind: 'none' }
+  | { kind: 'ok'; vencimento: string; days: number; label: string }
+  | { kind: 'due'; vencimento: string; days: number; label: string }
+
+export function manutencaoRegularInfo(input: {
+  intervaloDias: number | null | undefined
+  cadastradoEm: string
+  ultimaConclusao: string | null
+  today?: string
+  baixado?: boolean
+}): ManutencaoRegularInfo {
+  if (input.baixado || input.intervaloDias == null || input.intervaloDias < 1) {
+    return { kind: 'none' }
+  }
+  const ancora = input.ultimaConclusao
+    ? dateOnly(input.ultimaConclusao)
+    : dateOnly(input.cadastradoEm)
+  const vencimento = addDays(ancora, input.intervaloDias)
+  const today = input.today ?? todayLocal()
+  const days = daysUntil(vencimento, today)
+  if (days > 0) {
+    return { kind: 'ok', vencimento, days, label: formatDatePt(vencimento) }
+  }
+  if (days === 0) {
+    return { kind: 'due', vencimento, days, label: 'Manutenção hoje' }
+  }
+  const atraso = -days
+  return {
+    kind: 'due',
+    vencimento,
+    days,
+    label: atraso === 1 ? 'Atrasada há 1 dia' : `Atrasada há ${atraso} dias`,
+  }
+}

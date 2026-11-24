@@ -1,4 +1,4 @@
-import { todayLocal } from '@/lib/dates'
+import { manutencaoRegularInfo, todayLocal } from '@/lib/dates'
 import type { EquipamentoListItem, Manutencao, PainelData, StatusEquipamento } from '@/lib/types'
 import { wrapDb } from './errors'
 import { getDb } from './sqlite'
@@ -11,6 +11,9 @@ type EquipRow = {
   categoria_id: number
   categoria_nome: string
   categoria_ativo: number
+  categoria_manutencao_regular: number
+  categoria_intervalo_manutencao_dias: number | null
+  ultima_manutencao_conclusao: string | null
   setor_id: number
   setor_nome: string
   setor_ativo: number
@@ -40,6 +43,9 @@ function mapEquip(r: EquipRow): EquipamentoListItem {
     categoriaId: r.categoria_id,
     categoriaNome: r.categoria_nome,
     categoriaAtivo: r.categoria_ativo === 1,
+    categoriaManutencaoRegular: r.categoria_manutencao_regular === 1,
+    categoriaIntervaloManutencaoDias: r.categoria_intervalo_manutencao_dias,
+    ultimaManutencaoConclusao: r.ultima_manutencao_conclusao,
     setorId: r.setor_id,
     setorNome: r.setor_nome,
     setorAtivo: r.setor_ativo === 1,
@@ -65,6 +71,13 @@ const EQUIP_SELECT = `
   SELECT e.*,
     c.nome AS categoria_nome,
     c.ativo AS categoria_ativo,
+    c.manutencao_regular AS categoria_manutencao_regular,
+    c.intervalo_manutencao_dias AS categoria_intervalo_manutencao_dias,
+    (
+      SELECT MAX(m.data_conclusao)
+      FROM manutencoes m
+      WHERE m.equipamento_id = e.id AND m.situacao = 'concluida'
+    ) AS ultima_manutencao_conclusao,
     s.nome AS setor_nome,
     s.ativo AS setor_ativo
   FROM equipamentos e
@@ -129,6 +142,27 @@ export function dashboard(): PainelData {
       )
       .all(today, in30)
       .map(mapEquip)
+
+    const regulares = db
+      .query<EquipRow, []>(
+        `${EQUIP_SELECT}
+         WHERE e.status <> 'baixado' AND c.manutencao_regular = 1`,
+      )
+      .all()
+      .map(mapEquip)
+    const manutencoesRegularesVencidas = regulares
+      .flatMap((e) => {
+        const info = manutencaoRegularInfo({
+          intervaloDias: e.categoriaIntervaloManutencaoDias,
+          cadastradoEm: e.createdAt,
+          ultimaConclusao: e.ultimaManutencaoConclusao,
+          today,
+        })
+        return info.kind === 'due' ? [{ e, days: info.days }] : []
+      })
+      .sort((a, b) => a.days - b.days)
+      .slice(0, 10)
+      .map((item) => item.e)
 
     const manutencoesAbertas = db
       .query<
@@ -239,6 +273,7 @@ export function dashboard(): PainelData {
       valorTotalCentavos: counts?.valor_total ?? 0,
       garantiasVencidas,
       garantiasAVencer,
+      manutencoesRegularesVencidas,
       manutencoesAbertas,
       ultimasMovimentacoes,
     }

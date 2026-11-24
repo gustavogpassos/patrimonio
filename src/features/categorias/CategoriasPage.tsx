@@ -31,6 +31,8 @@ export function CategoriasPage() {
   const [nome, setNome] = useState('')
   const [descricao, setDescricao] = useState('')
   const [ativo, setAtivo] = useState(true)
+  const [manutencaoRegular, setManutencaoRegular] = useState(false)
+  const [intervalo, setIntervalo] = useState('')
 
   async function load() {
     try {
@@ -49,6 +51,8 @@ export function CategoriasPage() {
     setNome('')
     setDescricao('')
     setAtivo(true)
+    setManutencaoRegular(false)
+    setIntervalo('')
     setOpen(true)
   }
 
@@ -57,16 +61,29 @@ export function CategoriasPage() {
     setNome(c.nome)
     setDescricao(c.descricao ?? '')
     setAtivo(c.ativo)
+    setManutencaoRegular(c.manutencaoRegular)
+    setIntervalo(c.intervaloManutencaoDias ? String(c.intervaloManutencaoDias) : '')
     setOpen(true)
   }
 
   async function save() {
+    let intervaloManutencaoDias: number | null = null
+    if (manutencaoRegular) {
+      const dias = Number(intervalo)
+      if (!Number.isInteger(dias) || dias < 1 || dias > 3650) {
+        toast.error('Informe a frequência da manutenção regular, em dias.')
+        return
+      }
+      intervaloManutencaoDias = dias
+    }
     try {
       await api.saveCategoria({
         id: editing?.id,
         nome,
         descricao,
         ativo,
+        manutencaoRegular,
+        intervaloManutencaoDias,
       })
       toast.success(editing ? 'Categoria atualizada' : 'Categoria cadastrada')
       setOpen(false)
@@ -83,6 +100,8 @@ export function CategoriasPage() {
         nome: c.nome,
         descricao: c.descricao ?? '',
         ativo: !c.ativo,
+        manutencaoRegular: c.manutencaoRegular,
+        intervaloManutencaoDias: c.intervaloManutencaoDias,
       })
       toast.success(c.ativo ? 'Categoria inativada' : 'Categoria reativada')
       await load()
@@ -124,6 +143,7 @@ export function CategoriasPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Descrição</TableHead>
+              <TableHead>Manutenção</TableHead>
               <TableHead>Equipamentos</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -134,6 +154,11 @@ export function CategoriasPage() {
               <TableRow key={c.id}>
                 <TableCell className="font-medium">{c.nome}</TableCell>
                 <TableCell>{c.descricao ?? '—'}</TableCell>
+                <TableCell>
+                  {c.manutencaoRegular && c.intervaloManutencaoDias
+                    ? `A cada ${c.intervaloManutencaoDias} ${c.intervaloManutencaoDias === 1 ? 'dia' : 'dias'}`
+                    : '—'}
+                </TableCell>
                 <TableCell>{c.equipamentosCount}</TableCell>
                 <TableCell>
                   <AtivoBadge ativo={c.ativo} />
@@ -182,6 +207,27 @@ export function CategoriasPage() {
               />
               Ativo
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={manutencaoRegular}
+                onChange={(e) => setManutencaoRegular(e.target.checked)}
+              />
+              Manutenção regular
+            </label>
+            {manutencaoRegular && (
+              <div className="space-y-1">
+                <Label htmlFor="intervalo">Frequência (dias)</Label>
+                <Input
+                  id="intervalo"
+                  type="number"
+                  min={1}
+                  max={3650}
+                  value={intervalo}
+                  onChange={(e) => setIntervalo(e.target.value)}
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>

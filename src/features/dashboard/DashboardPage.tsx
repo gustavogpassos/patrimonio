@@ -1,7 +1,7 @@
 import { EmptyState } from '@/components/EmptyState'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
-import { formatDatePt } from '@/lib/dates'
+import { formatDatePt, manutencaoRegularInfo } from '@/lib/dates'
 import { formatBRL } from '@/lib/money'
 import type { PainelData } from '@/lib/types'
 import { useEffect, useState } from 'react'
@@ -103,6 +103,25 @@ export function DashboardPage() {
               {e.tombamento} · {e.nome} · {formatDatePt(e.garantiaAte)}
             </Link>
           ))}
+        </ListCard>
+
+        <ListCard
+          title="Manutenção regular a fazer"
+          empty={data.manutencoesRegularesVencidas.length === 0}
+        >
+          {data.manutencoesRegularesVencidas.map((e) => {
+            const info = manutencaoRegularInfo({
+              intervaloDias: e.categoriaIntervaloManutencaoDias,
+              cadastradoEm: e.createdAt,
+              ultimaConclusao: e.ultimaManutencaoConclusao,
+            })
+            return (
+              <Link key={e.id} to={`/equipamentos/${e.id}`} className="block hover:underline">
+                {e.tombamento} · {e.nome}
+                {info.kind === 'due' ? ` · ${info.label}` : ''}
+              </Link>
+            )
+          })}
         </ListCard>
 
         <ListCard

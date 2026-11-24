@@ -15,3 +15,7 @@ _Avoid_: Complemento, sala
 **Equipamento**:
 Bem de informática controlado pelo sistema, com tombamento, categoria e manutenção.
 _Avoid_: Ativo, item, patrimônio
+
+**Manutenção regular**:
+Revisão periódica exigida pela categoria, medida em dias. A primeira contagem começa na data de cadastro do equipamento. Uma manutenção concluída reinicia a contagem na data de conclusão.
+_Avoid_: Garantia, revisão

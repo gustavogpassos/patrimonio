@@ -26,7 +26,7 @@ describe('migrações', () => {
       expect(listCategorias(true)).toHaveLength(categorias)
       expect(listSetores(true).some((setor) => setor.nome === 'Almoxarifado')).toBe(true)
       const versions = getDb().query<{ version: number }, []>('SELECT version FROM schema_migrations').all()
-      expect(versions.map((row) => row.version)).toEqual([1])
+      expect(versions.map((row) => row.version)).toEqual([1, 2])
     } finally {
       closeDb()
       rmSync(dir, { recursive: true, force: true })
