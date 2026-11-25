@@ -1,3 +1,5 @@
+import { RowActions } from '@/components/RowActions'
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { ActiveBadge } from '@/components/StatusBadge'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api'
+import { useShortcut } from '@/lib/shortcuts'
 import type { Sector } from '@/lib/types'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -91,6 +94,9 @@ export function SectorsPage() {
     }
   }
 
+  useShortcut('n', openNew, { enabled: !open, allowInField: true })
+  useShortcut('s', () => void save(), { enabled: open, allowInField: true })
+
   async function remove(sector: Sector) {
     if (!window.confirm(`Excluir o setor "${sector.name}"?`)) return
     try {
@@ -109,7 +115,10 @@ export function SectorsPage() {
           <h2 className="text-2xl font-semibold">Setores</h2>
           <p className="text-muted-foreground">Locais onde os equipamentos ficam</p>
         </div>
-        <Button onClick={openNew}>Novo setor</Button>
+        <Button onClick={openNew} aria-keyshortcuts="Control+N">
+          Novo setor
+          <ShortcutHint keys="Ctrl N" />
+        </Button>
       </div>
 
       {items.length === 0 ? (
@@ -123,28 +132,35 @@ export function SectorsPage() {
               <TableHead>Descrição</TableHead>
               <TableHead>Equipamentos</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="sticky right-0 z-10 bg-white text-right shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none">
+                Ações
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((sector) => (
-              <TableRow key={sector.id}>
+              <TableRow key={sector.id} className="group">
                 <TableCell className="font-medium">{sector.name}</TableCell>
                 <TableCell>{sector.description ?? '—'}</TableCell>
                 <TableCell>{sector.equipmentCount}</TableCell>
                 <TableCell>
                   <ActiveBadge active={sector.active} />
                 </TableCell>
-                <TableCell className="space-x-2 text-right">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(sector)}>
-                    Editar
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void toggleActive(sector)}>
-                    {sector.active ? 'Inativar' : 'Reativar'}
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => void remove(sector)}>
-                    Excluir
-                  </Button>
+                <TableCell className="sticky right-0 z-10 bg-white group-hover:bg-zinc-50 shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none">
+                  <RowActions
+                    actions={[
+                      { label: 'Editar', onClick: () => openEdit(sector) },
+                      {
+                        label: sector.active ? 'Inativar' : 'Reativar',
+                        onClick: () => void toggleActive(sector),
+                      },
+                      {
+                        label: 'Excluir',
+                        destructive: true,
+                        onClick: () => void remove(sector),
+                      },
+                    ]}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -184,7 +200,10 @@ export function SectorsPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => void save()}>Salvar</Button>
+            <Button onClick={() => void save()} aria-keyshortcuts="Control+S">
+              Salvar
+              <ShortcutHint keys="Ctrl S" />
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

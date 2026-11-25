@@ -131,6 +131,10 @@ export const api = {
     request<EquipmentDetail>(`/api/equipment/${id}/reactivate`, {
       method: 'POST',
     }),
+  markInUse: (id: number) =>
+    request<EquipmentDetail>(`/api/equipment/${id}/in-use`, {
+      method: 'POST',
+    }),
   deleteEquipment: (id: number, assetTagConfirmation: string) =>
     request<{ ok: boolean }>(`/api/equipment/${id}/delete`, {
       method: 'POST',

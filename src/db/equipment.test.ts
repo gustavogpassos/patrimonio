@@ -5,8 +5,10 @@ import { listCategories } from './categories'
 import {
   createEquipment,
   getEquipment,
+  markEquipmentInUse,
   nextAssetTag,
   transferEquipment,
+  updateEquipment,
 } from './equipment'
 import { AppError } from './errors'
 import {
@@ -280,6 +282,68 @@ describe('equipment rules', () => {
         notes: null,
       }),
     ).toThrow(AppError)
+  })
+
+  test('stock equipment can move to in use', () => {
+    const { category, sectorA } = setup()
+    const created = createEquipment({
+      assetTag: 'PAT-000001',
+      name: 'PC 1',
+      description: null,
+      categoryId: category.id,
+      sectorId: sectorA.id,
+      location: null,
+      status: 'in_stock',
+      brand: 'Dell',
+      model: null,
+      serialNumber: 'SN-1',
+      acquiredOn: null,
+      acquisitionValueCents: null,
+      supplier: 'Loja',
+      invoice: null,
+      warrantyUntil: null,
+      notes: null,
+    })
+
+    const updated = updateEquipment(created.id, {
+      assetTag: created.assetTag,
+      name: created.name,
+      description: null,
+      categoryId: category.id,
+      brand: 'Dell',
+      model: null,
+      serialNumber: 'SN-1',
+      acquiredOn: null,
+      acquisitionValueCents: null,
+      supplier: 'Loja',
+      invoice: null,
+      warrantyUntil: null,
+      notes: null,
+      status: 'in_use',
+    })
+    expect(updated.status).toBe('in_use')
+    expect(updated.serialNumber).toBe('SN-1')
+    expect(updated.supplier).toBe('Loja')
+
+    expect(markEquipmentInUse(updated.id).status).toBe('in_use')
+    expect(() =>
+      updateEquipment(updated.id, {
+        assetTag: updated.assetTag,
+        name: updated.name,
+        description: null,
+        categoryId: category.id,
+        brand: 'Dell',
+        model: null,
+        serialNumber: 'SN-1',
+        acquiredOn: null,
+        acquisitionValueCents: null,
+        supplier: 'Loja',
+        invoice: null,
+        warrantyUntil: null,
+        notes: null,
+        status: 'in_stock',
+      }),
+    ).toThrow('Só é possível mudar o status de Em estoque para Em uso.')
   })
 })
 

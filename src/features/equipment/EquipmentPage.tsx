@@ -1,6 +1,7 @@
 import { EmptyState } from '@/components/EmptyState'
 import { RegularMaintenanceBadge } from '@/components/RegularMaintenanceBadge'
 import { Pagination } from '@/components/Pagination'
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { StatusBadge } from '@/components/StatusBadge'
 import { WarrantyBadge } from '@/components/WarrantyBadge'
 import { Button } from '@/components/ui/button'
@@ -29,9 +30,10 @@ import {
 import { api } from '@/lib/api'
 import { buildEquipmentCsv, downloadTextFile } from '@/lib/csv'
 import { todayLocal } from '@/lib/dates'
+import { useShortcut } from '@/lib/shortcuts'
 import type { Category, EquipmentListItem, EquipmentStatus, Sector } from '@/lib/types'
 import { MoreHorizontal } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -43,6 +45,10 @@ export function EquipmentPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [sectors, setSectors] = useState<Sector[]>([])
   const [qInput, setQInput] = useState(params.get('q') ?? '')
+  const [reloadKey, setReloadKey] = useState(0)
+  const rowRefs = useRef<Array<HTMLTableRowElement | null>>([])
+
+  useShortcut('n', () => navigate('/equipment/new'), { allowInField: true })
 
   const q = params.get('q') ?? ''
   const categoryId = params.get('categoryId')
@@ -87,7 +93,7 @@ export function EquipmentPage() {
         setTotal(result.total)
       })
       .catch((err) => toast.error(err.message))
-  }, [q, categoryId, sectorId, status, page])
+  }, [q, categoryId, sectorId, status, page, reloadKey])
 
   function updateParam(key: string, value: string | null) {
     const next = new URLSearchParams(params)
@@ -100,6 +106,37 @@ export function EquipmentPage() {
   function clearFilters() {
     setQInput('')
     setParams(new URLSearchParams())
+  }
+
+  async function putInUse(item: EquipmentListItem) {
+    if (!window.confirm(`Colocar "${item.name}" em uso?`)) return
+    try {
+      await api.markInUse(item.id)
+      toast.success('Equipamento em uso')
+      setReloadKey((current) => current + 1)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro')
+    }
+  }
+
+  function onRowKeyDown(event: KeyboardEvent<HTMLTableRowElement>, index: number) {
+    if (event.target !== event.currentTarget) return
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      rowRefs.current[index + 1]?.focus()
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      rowRefs.current[index - 1]?.focus()
+    } else if (event.key === 'Home') {
+      event.preventDefault()
+      rowRefs.current[0]?.focus()
+    } else if (event.key === 'End') {
+      event.preventDefault()
+      rowRefs.current[items.length - 1]?.focus()
+    } else if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      navigate(`/equipment/${items[index]?.id}`)
+    }
   }
 
   async function exportCsv() {
@@ -137,13 +174,19 @@ export function EquipmentPage() {
         <div>
           <h2 className="text-2xl font-semibold">Equipamentos</h2>
           <p className="text-muted-foreground">Inventário de informática</p>
+          <p className="hidden text-xs text-muted-foreground md:block">
+            Ctrl+N cria um equipamento. Com o foco na linha, as setas movem e Enter abre.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => void exportCsv()}>
             Exportar CSV
           </Button>
           <Button asChild>
-            <Link to="/equipment/new">Novo equipamento</Link>
+            <Link to="/equipment/new" aria-keyshortcuts="Control+N">
+              Novo equipamento
+              <ShortcutHint keys="Ctrl N" />
+            </Link>
           </Button>
         </div>
       </div>
@@ -213,7 +256,10 @@ export function EquipmentPage() {
           action={
             !hasFilters ? (
               <Button asChild>
-                <Link to="/equipment/new">Novo equipamento</Link>
+                <Link to="/equipment/new" aria-keyshortcuts="Control+N">
+                  Novo equipamento
+                  <ShortcutHint keys="Ctrl N" />
+                </Link>
               </Button>
             ) : undefined
           }
@@ -230,17 +276,23 @@ export function EquipmentPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Garantia</TableHead>
                 <TableHead>Manutenção</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="sticky right-0 z-10 w-12 bg-white shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <Link className="font-medium hover:underline" to={`/equipment/${item.id}`}>
-                      {item.assetTag}
-                    </Link>
-                  </TableCell>
+              {items.map((item, index) => (
+                <TableRow
+                  key={item.id}
+                  ref={(node) => {
+                    rowRefs.current[index] = node
+                  }}
+                  tabIndex={0}
+                  className="group cursor-pointer focus-visible:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+                  aria-label={`Abrir ${item.name}`}
+                  onClick={() => navigate(`/equipment/${item.id}`)}
+                  onKeyDown={(event) => onRowKeyDown(event, index)}
+                >
+                  <TableCell className="font-medium">{item.assetTag}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell>
                     {item.categoryName}
@@ -272,22 +324,42 @@ export function EquipmentPage() {
                       writtenOff={item.status === 'written_off'}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell
+                    className="sticky right-0 z-10 bg-white group-hover:bg-zinc-50 group-focus-visible:bg-muted shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-11 lg:size-8"
+                          aria-label={`Ações de ${item.name}`}
+                        >
                           <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/equipment/${item.id}`)}>
+                        <DropdownMenuItem
+                          className="min-h-11 lg:min-h-0"
+                          onClick={() => navigate(`/equipment/${item.id}`)}
+                        >
                           Abrir
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          className="min-h-11 lg:min-h-0"
                           onClick={() => navigate(`/equipment/${item.id}/edit`)}
                         >
                           Editar
                         </DropdownMenuItem>
+                        {item.status === 'in_stock' && (
+                          <DropdownMenuItem
+                            className="min-h-11 lg:min-h-0"
+                            onClick={() => void putInUse(item)}
+                          >
+                            Colocar em uso
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

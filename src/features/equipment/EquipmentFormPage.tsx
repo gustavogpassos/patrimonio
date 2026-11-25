@@ -1,3 +1,4 @@
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +12,8 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api'
 import { formatBRLPlain, parseBRLToCents } from '@/lib/money'
-import type { Category, Sector } from '@/lib/types'
+import { useShortcut } from '@/lib/shortcuts'
+import type { Category, EquipmentStatus, Sector } from '@/lib/types'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -43,6 +45,7 @@ export function EquipmentFormPage() {
   const [notes, setNotes] = useState('')
   const [sectorName, setSectorName] = useState('')
   const [hasOpenMaintenance, setHasOpenMaintenance] = useState(false)
+  const [recordStatus, setRecordStatus] = useState<EquipmentStatus | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -77,6 +80,10 @@ export function EquipmentFormPage() {
           setWarrantyUntil(equipment.warrantyUntil ?? '')
           setNotes(equipment.notes ?? '')
           setHasOpenMaintenance(equipment.hasOpenMaintenance)
+          setRecordStatus(equipment.status)
+          if (equipment.status === 'in_stock' || equipment.status === 'in_use') {
+            setStatus(equipment.status)
+          }
         } else {
           const next = await api.nextAssetTag()
           setAssetTag(next.assetTag)
@@ -89,6 +96,8 @@ export function EquipmentFormPage() {
     }
     void load()
   }, [id, isEdit])
+
+  useShortcut('s', () => void save(), { enabled: !loading, allowInField: true })
 
   async function save() {
     try {
@@ -115,6 +124,7 @@ export function EquipmentFormPage() {
           invoice,
           warrantyUntil,
           notes,
+          ...(recordStatus === 'in_stock' ? { status } : {}),
         })
         toast.success('Equipamento atualizado')
         navigate(`/equipment/${updated.id}`)
@@ -153,6 +163,7 @@ export function EquipmentFormPage() {
         <h2 className="text-2xl font-semibold">
           {isEdit ? 'Editar equipamento' : 'Novo equipamento'}
         </h2>
+        <p className="hidden text-xs text-muted-foreground sm:block">Ctrl+S salva o formulário.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -177,7 +188,7 @@ export function EquipmentFormPage() {
           </Select>
         </Field>
 
-        {!isEdit && (
+        {(!isEdit || recordStatus === 'in_stock') && (
           <Field label="Status">
             <Select
               value={status}
@@ -239,34 +250,11 @@ export function EquipmentFormPage() {
         <Field label="Modelo">
           <Input value={model} onChange={(e) => setModel(e.target.value)} />
         </Field>
-        <Field label="Número de série">
-          <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
-        </Field>
-        <Field label="Data de aquisição">
-          <Input
-            type="date"
-            value={acquiredOn}
-            onChange={(e) => setAcquiredOn(e.target.value)}
-          />
-        </Field>
         <Field label="Valor (R$)">
           <Input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0,00"
-          />
-        </Field>
-        <Field label="Fornecedor">
-          <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} />
-        </Field>
-        <Field label="Nota fiscal">
-          <Input value={invoice} onChange={(e) => setInvoice(e.target.value)} />
-        </Field>
-        <Field label="Garantia até">
-          <Input
-            type="date"
-            value={warrantyUntil}
-            onChange={(e) => setWarrantyUntil(e.target.value)}
           />
         </Field>
         <div className="sm:col-span-2 space-y-1">
@@ -280,7 +268,10 @@ export function EquipmentFormPage() {
       </div>
 
       <div className="flex gap-2">
-        <Button onClick={() => void save()}>Salvar</Button>
+        <Button onClick={() => void save()} aria-keyshortcuts="Control+S">
+          Salvar
+          <ShortcutHint keys="Ctrl S" />
+        </Button>
         <Button variant="outline" asChild>
           <Link to={isEdit && id ? `/equipment/${id}` : '/equipment'}>
             Cancelar

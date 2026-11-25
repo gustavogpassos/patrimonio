@@ -25,7 +25,12 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
-      <Toaster richColors position="top-right" />
+      <Toaster
+        richColors
+        position="bottom-center"
+        offset={16}
+        mobileOffset={{ bottom: 24 }}
+      />
     </BrowserRouter>
   )
 }

@@ -20,6 +20,7 @@ import {
   getEquipment,
   listEquipment,
   nextAssetTag,
+  markEquipmentInUse,
   reactivateEquipment,
   transferEquipment,
   updateEquipment,
@@ -172,6 +173,12 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
       const match = /^\/api\/equipment\/(\d+)\/reactivate$/.exec(path)
       if (match && method === 'POST') {
         return json(reactivateEquipment(Number(match[1])))
+      }
+    }
+    {
+      const match = /^\/api\/equipment\/(\d+)\/in-use$/.exec(path)
+      if (match && method === 'POST') {
+        return json(markEquipmentInUse(Number(match[1])))
       }
     }
     {

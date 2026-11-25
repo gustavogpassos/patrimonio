@@ -22,6 +22,7 @@ import { formatDate } from '@/lib/dates'
 import { formatBRL } from '@/lib/money'
 import type { EquipmentDetail, Maintenance } from '@/lib/types'
 import { MAINTENANCE_TYPE_LABELS } from '@/lib/types'
+import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -53,6 +54,18 @@ export function EquipmentDetailPage() {
     void load()
   }, [id])
 
+  async function putInUse() {
+    if (!equipment) return
+    if (!window.confirm('O equipamento passa de Em estoque para Em uso.')) return
+    try {
+      await api.markInUse(equipment.id)
+      toast.success('Equipamento em uso')
+      await load()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro')
+    }
+  }
+
   async function reactivate() {
     if (!equipment) return
     if (!window.confirm('O status volta para Em estoque.')) return
@@ -71,6 +84,12 @@ export function EquipmentDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Button variant="outline" className="w-fit" asChild>
+        <Link to="/equipment">
+          <ArrowLeft />
+          Voltar para a lista
+        </Link>
+      </Button>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
@@ -80,6 +99,9 @@ export function EquipmentDetailPage() {
           <p className="text-muted-foreground">{equipment.assetTag}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {equipment.status === 'in_stock' && (
+            <Button onClick={() => void putInUse()}>Colocar em uso</Button>
+          )}
           <Button variant="outline" asChild>
             <Link to={`/equipment/${equipment.id}/edit`}>Editar</Link>
           </Button>

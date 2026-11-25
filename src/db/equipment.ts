@@ -389,15 +389,23 @@ export function updateEquipment(
   input: UpdateEquipmentInput,
 ): EquipmentDetail {
   return wrapDb(() => {
-    getEquipment(id)
+    const current = getEquipment(id)
     assertActiveCategory(input.categoryId)
     if (input.acquiredOn) assertNotFuture(input.acquiredOn, 'Data de aquisição')
+
+    let status = current.status
+    if (input.status && input.status !== current.status) {
+      if (current.status !== 'in_stock' || input.status !== 'in_use') {
+        throw new AppError('Só é possível mudar o status de Em estoque para Em uso.')
+      }
+      status = input.status
+    }
 
     const db = getDb()
     db.query(
       `UPDATE equipment SET
         asset_tag = ?, name = ?, description = ?, category_id = ?,
-        brand = ?, model = ?, serial_number = ?,
+        brand = ?, model = ?, serial_number = ?, status = ?,
         acquired_on = ?, acquisition_value_cents = ?,
         supplier = ?, invoice = ?, warranty_until = ?, notes = ?,
         updated_at = datetime('now','localtime')
@@ -410,6 +418,7 @@ export function updateEquipment(
       nullIfEmpty(input.brand),
       nullIfEmpty(input.model),
       nullIfEmpty(input.serialNumber),
+      status,
       nullIfEmpty(input.acquiredOn),
       input.acquisitionValueCents ?? null,
       nullIfEmpty(input.supplier),
@@ -418,6 +427,24 @@ export function updateEquipment(
       nullIfEmpty(input.notes),
       id,
     )
+    return getEquipment(id)
+  })
+}
+
+export function markEquipmentInUse(id: number): EquipmentDetail {
+  return wrapDb(() => {
+    const current = getEquipment(id)
+    if (current.status === 'in_use') return current
+    if (current.status !== 'in_stock') {
+      throw new AppError('Só é possível colocar em uso um equipamento que está em estoque.')
+    }
+    getDb()
+      .query(
+        `UPDATE equipment
+         SET status = 'in_use', updated_at = datetime('now','localtime')
+         WHERE id = ?`,
+      )
+      .run(id)
     return getEquipment(id)
   })
 }
