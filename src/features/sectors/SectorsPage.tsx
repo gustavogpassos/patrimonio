@@ -104,8 +104,8 @@ export function SectorsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-2xl font-semibold">Setores</h2>
           <p className="text-muted-foreground">Locais onde os equipamentos ficam</p>
         </div>
