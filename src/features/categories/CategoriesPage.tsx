@@ -1,3 +1,5 @@
+import { RowActions } from '@/components/RowActions'
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { ActiveBadge } from '@/components/StatusBadge'
 import { EmptyState } from '@/components/EmptyState'
 import { Button } from '@/components/ui/button'
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { api } from '@/lib/api'
+import { useShortcut } from '@/lib/shortcuts'
 import type { Category } from '@/lib/types'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -112,6 +115,9 @@ export function CategoriesPage() {
     }
   }
 
+  useShortcut('n', openNew, { enabled: !open, allowInField: true })
+  useShortcut('s', () => void save(), { enabled: open, allowInField: true })
+
   async function remove(category: Category) {
     if (!window.confirm(`Excluir a categoria "${category.name}"?`)) return
     try {
@@ -130,7 +136,10 @@ export function CategoriesPage() {
           <h2 className="text-2xl font-semibold">Categorias</h2>
           <p className="text-muted-foreground">Tipos de equipamentos de informática</p>
         </div>
-        <Button onClick={openNew}>Nova categoria</Button>
+        <Button onClick={openNew} aria-keyshortcuts="Control+N">
+          Nova categoria
+          <ShortcutHint keys="Ctrl N" />
+        </Button>
       </div>
 
       {items.length === 0 ? (
@@ -148,12 +157,14 @@ export function CategoriesPage() {
               <TableHead>Manutenção</TableHead>
               <TableHead>Equipamentos</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
+              <TableHead className="sticky right-0 z-10 bg-white text-right shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none">
+                Ações
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((category) => (
-              <TableRow key={category.id}>
+              <TableRow key={category.id} className="group">
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell>{category.description ?? '—'}</TableCell>
                 <TableCell>
@@ -165,16 +176,21 @@ export function CategoriesPage() {
                 <TableCell>
                   <ActiveBadge active={category.active} />
                 </TableCell>
-                <TableCell className="space-x-2 text-right">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(category)}>
-                    Editar
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void toggleActive(category)}>
-                    {category.active ? 'Inativar' : 'Reativar'}
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => void remove(category)}>
-                    Excluir
-                  </Button>
+                <TableCell className="sticky right-0 z-10 bg-white group-hover:bg-zinc-50 shadow-[-8px_0_8px_-8px_rgba(0,0,0,0.25)] lg:static lg:shadow-none">
+                  <RowActions
+                    actions={[
+                      { label: 'Editar', onClick: () => openEdit(category) },
+                      {
+                        label: category.active ? 'Inativar' : 'Reativar',
+                        onClick: () => void toggleActive(category),
+                      },
+                      {
+                        label: 'Excluir',
+                        destructive: true,
+                        onClick: () => void remove(category),
+                      },
+                    ]}
+                  />
                 </TableCell>
               </TableRow>
             ))}
@@ -235,7 +251,10 @@ export function CategoriesPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => void save()}>Salvar</Button>
+            <Button onClick={() => void save()} aria-keyshortcuts="Control+S">
+              Salvar
+              <ShortcutHint keys="Ctrl S" />
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

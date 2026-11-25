@@ -78,6 +78,7 @@ export const updateEquipmentSchema = z.object({
   invoice: optionalText(120),
   warrantyUntil: optionalDate,
   notes: optionalText(2000),
+  status: z.enum(['in_stock', 'in_use']).optional(),
 })
 
 export const transferSchema = z.object({

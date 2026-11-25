@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/EmptyState'
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { Pagination } from '@/components/Pagination'
 import { MaintenanceStateBadge } from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/table'
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/dates'
+import { useShortcut } from '@/lib/shortcuts'
 import type { Maintenance, MaintenanceState, MaintenanceType } from '@/lib/types'
 import { MAINTENANCE_TYPE_LABELS } from '@/lib/types'
 import { useEffect, useState } from 'react'
@@ -71,6 +73,9 @@ export function MaintenancePage() {
     void load()
   }, [state, type, q, page])
 
+  const dialogOpen = openNew || Boolean(completeTarget) || Boolean(cancelTarget)
+  useShortcut('n', () => setOpenNew(true), { enabled: !dialogOpen, allowInField: true })
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -78,7 +83,10 @@ export function MaintenancePage() {
           <h2 className="text-2xl font-semibold">Manutenções</h2>
           <p className="text-muted-foreground">Histórico e ordens em aberto</p>
         </div>
-        <Button onClick={() => setOpenNew(true)}>Nova manutenção</Button>
+        <Button onClick={() => setOpenNew(true)} aria-keyshortcuts="Control+N">
+          Nova manutenção
+          <ShortcutHint keys="Ctrl N" />
+        </Button>
       </div>
 
       <div className="flex flex-wrap gap-2">
