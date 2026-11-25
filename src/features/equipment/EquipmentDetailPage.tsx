@@ -73,8 +73,8 @@ export function EquipmentDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold">{equipment.name}</h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <h2 className="text-2xl font-semibold break-words">{equipment.name}</h2>
             <StatusBadge status={equipment.status} />
           </div>
           <p className="text-muted-foreground">{equipment.assetTag}</p>
