@@ -115,7 +115,7 @@ export function CategoriesPage() {
     }
   }
 
-  useShortcut('n', openNew, { enabled: !open, allowInField: true })
+  useShortcut('n', openNew, { enabled: !open, allowInField: true, alt: true })
   useShortcut('s', () => void save(), { enabled: open, allowInField: true })
 
   async function remove(category: Category) {
@@ -136,9 +136,9 @@ export function CategoriesPage() {
           <h2 className="text-2xl font-semibold">Categorias</h2>
           <p className="text-muted-foreground">Tipos de equipamentos de informática</p>
         </div>
-        <Button onClick={openNew} aria-keyshortcuts="Control+N">
+        <Button onClick={openNew} aria-keyshortcuts="Alt+N">
           Nova categoria
-          <ShortcutHint keys="Ctrl N" />
+          <ShortcutHint keys="Alt N" />
         </Button>
       </div>
 
