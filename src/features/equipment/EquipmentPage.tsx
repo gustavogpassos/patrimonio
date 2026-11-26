@@ -48,7 +48,7 @@ export function EquipmentPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const rowRefs = useRef<Array<HTMLTableRowElement | null>>([])
 
-  useShortcut('n', () => navigate('/equipment/new'), { allowInField: true })
+  useShortcut('n', () => navigate('/equipment/new'), { allowInField: true, alt: true })
 
   const q = params.get('q') ?? ''
   const categoryId = params.get('categoryId')
@@ -175,7 +175,7 @@ export function EquipmentPage() {
           <h2 className="text-2xl font-semibold">Equipamentos</h2>
           <p className="text-muted-foreground">Inventário de informática</p>
           <p className="hidden text-xs text-muted-foreground md:block">
-            Ctrl+N cria um equipamento. Com o foco na linha, as setas movem e Enter abre.
+            Alt+N cria um equipamento. Com o foco na linha, as setas movem e Enter abre.
           </p>
         </div>
         <div className="flex gap-2">
@@ -183,9 +183,9 @@ export function EquipmentPage() {
             Exportar CSV
           </Button>
           <Button asChild>
-            <Link to="/equipment/new" aria-keyshortcuts="Control+N">
+            <Link to="/equipment/new" aria-keyshortcuts="Alt+N">
               Novo equipamento
-              <ShortcutHint keys="Ctrl N" />
+              <ShortcutHint keys="Alt N" />
             </Link>
           </Button>
         </div>
@@ -256,9 +256,9 @@ export function EquipmentPage() {
           action={
             !hasFilters ? (
               <Button asChild>
-                <Link to="/equipment/new" aria-keyshortcuts="Control+N">
+                <Link to="/equipment/new" aria-keyshortcuts="Alt+N">
                   Novo equipamento
-                  <ShortcutHint keys="Ctrl N" />
+                  <ShortcutHint keys="Alt N" />
                 </Link>
               </Button>
             ) : undefined

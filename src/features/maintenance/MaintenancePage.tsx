@@ -74,7 +74,7 @@ export function MaintenancePage() {
   }, [state, type, q, page])
 
   const dialogOpen = openNew || Boolean(completeTarget) || Boolean(cancelTarget)
-  useShortcut('n', () => setOpenNew(true), { enabled: !dialogOpen, allowInField: true })
+  useShortcut('n', () => setOpenNew(true), { enabled: !dialogOpen, allowInField: true, alt: true })
 
   return (
     <div className="space-y-4">
@@ -83,9 +83,9 @@ export function MaintenancePage() {
           <h2 className="text-2xl font-semibold">Manutenções</h2>
           <p className="text-muted-foreground">Histórico e ordens em aberto</p>
         </div>
-        <Button onClick={() => setOpenNew(true)} aria-keyshortcuts="Control+N">
+        <Button onClick={() => setOpenNew(true)} aria-keyshortcuts="Alt+N">
           Nova manutenção
-          <ShortcutHint keys="Ctrl N" />
+          <ShortcutHint keys="Alt N" />
         </Button>
       </div>
 
