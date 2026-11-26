@@ -9,10 +9,11 @@ function isTypingTarget(target: EventTarget | null) {
 export function useShortcut(
   key: string,
   onFire: () => void,
-  options?: { enabled?: boolean; allowInField?: boolean },
+  options?: { enabled?: boolean; allowInField?: boolean; alt?: boolean },
 ) {
   const enabled = options?.enabled ?? true
   const allowInField = options?.allowInField ?? false
+  const alt = options?.alt ?? false
   const onFireRef = useRef(onFire)
   const enabledRef = useRef(enabled)
 
@@ -24,7 +25,11 @@ export function useShortcut(
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.repeat || event.shiftKey) return
-      if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+      // Chrome não entrega Ctrl+N à página (janela nova). Alt+N chega e pode ser usado.
+      const modifier = alt
+        ? event.altKey && !event.ctrlKey && !event.metaKey
+        : (event.ctrlKey || event.metaKey) && !event.altKey
+      if (!modifier) return
       if (event.key.toLowerCase() !== key.toLowerCase()) return
       if (!allowInField && isTypingTarget(event.target)) return
       event.preventDefault()
@@ -34,5 +39,5 @@ export function useShortcut(
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [key, allowInField])
+  }, [key, allowInField, alt])
 }

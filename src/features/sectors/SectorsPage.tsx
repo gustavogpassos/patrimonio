@@ -94,7 +94,7 @@ export function SectorsPage() {
     }
   }
 
-  useShortcut('n', openNew, { enabled: !open, allowInField: true })
+  useShortcut('n', openNew, { enabled: !open, allowInField: true, alt: true })
   useShortcut('s', () => void save(), { enabled: open, allowInField: true })
 
   async function remove(sector: Sector) {
@@ -115,9 +115,9 @@ export function SectorsPage() {
           <h2 className="text-2xl font-semibold">Setores</h2>
           <p className="text-muted-foreground">Locais onde os equipamentos ficam</p>
         </div>
-        <Button onClick={openNew} aria-keyshortcuts="Control+N">
+        <Button onClick={openNew} aria-keyshortcuts="Alt+N">
           Novo setor
-          <ShortcutHint keys="Ctrl N" />
+          <ShortcutHint keys="Alt N" />
         </Button>
       </div>
 
