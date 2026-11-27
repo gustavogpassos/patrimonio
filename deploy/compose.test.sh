@@ -19,6 +19,7 @@ PATRIMONIO_DB_PASSWORD=test
 CHAMADOS_DB_PASSWORD=test
 SESSION_SECRET=test
 CHAMADOS_OIDC_SECRET=test
+PATRIMONIO_OIDC_SECRET=test
 EOF
 
 output="$(docker compose -f "${COMPOSE_FILE}" --env-file "${env_file}" config 2>&1)" || {
@@ -35,8 +36,17 @@ postgres_block="$(echo "${output}" | awk '
 
 postgres_publishes_port() {
   local block="$1"
-  echo "$block" | grep -qE '[0-9]+:[0-9]+' && return 0
-  echo "$block" | grep -qE 'published:[[:space:]]+"?[0-9]+"?' && return 0
+  local ports_block
+  ports_block="$(echo "$block" | awk '
+    /^    ports:/ { found=1; print; next }
+    found && /^    [a-zA-Z0-9_-]+:/ { exit }
+    found { print }
+  ')"
+  if [[ -z "${ports_block}" ]]; then
+    return 1
+  fi
+  echo "${ports_block}" | grep -qE '[0-9]+:[0-9]+' && return 0
+  echo "${ports_block}" | grep -qE 'published:[[:space:]]+"?[0-9]+"?' && return 0
   return 1
 }
 
@@ -117,6 +127,32 @@ fi
 
 if ! echo "${chamados_block}" | grep -q 'postgres://chamados'; then
   echo "FAIL: chamados service missing postgres://chamados DATABASE_URL"
+  exit 1
+fi
+
+patrimonio_block="$(echo "${output}" | awk '
+  /^  patrimonio:/ { found=1; print; next }
+  found && /^  [a-zA-Z0-9_-]+:/ { exit }
+  found { print }
+')"
+
+if [[ -z "${patrimonio_block}" ]]; then
+  echo "FAIL: missing patrimonio service"
+  exit 1
+fi
+
+if postgres_publishes_port "${patrimonio_block}"; then
+  echo "FAIL: patrimonio service has host port mapping"
+  exit 1
+fi
+
+if ! echo "${patrimonio_block}" | grep -q 'postgres://patrimonio'; then
+  echo "FAIL: patrimonio service missing postgres://patrimonio DATABASE_URL"
+  exit 1
+fi
+
+if ! echo "${patrimonio_block}" | grep -q '/patrimonio/api/auth/login'; then
+  echo "FAIL: patrimonio service missing healthcheck login path"
   exit 1
 fi
 

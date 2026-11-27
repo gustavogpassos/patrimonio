@@ -127,6 +127,35 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  patrimonio:
+    build:
+      context: ../apps/patrimonio
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://patrimonio:${PATRIMONIO_DB_PASSWORD}@postgres:5432/patrimonio
+      SESSION_SECRET: ${SESSION_SECRET}
+      AUTHENTIK_ISSUER: http://authentik:9000/authentik/application/o/patrimonio/
+      AUTHENTIK_BROWSER_URL: http://${INTRANET_IP}
+      INTRANET_IP: ${INTRANET_IP}
+      PATRIMONIO_OIDC_SECRET: ${PATRIMONIO_OIDC_SECRET}
+      PORT: "8787"
+    networks:
+      - intranet
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "const r = await fetch('http://127.0.0.1:8787/patrimonio/api/auth/login', { redirect: 'manual' }); if (r.status !== 302) process.exit(1)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
 networks:
   intranet:
 
