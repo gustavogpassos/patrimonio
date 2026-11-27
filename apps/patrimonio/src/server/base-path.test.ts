@@ -98,6 +98,9 @@ describe('base path /patrimonio', () => {
   test('GET /patrimonio/api/dashboard returns 200', async () => {
     const res = await fetch(`http://127.0.0.1:${port}/patrimonio/api/dashboard`)
     expect(res.status).toBe(200)
+    expect(res.headers.get('content-type') ?? '').toContain('application/json')
+    const body = (await res.json()) as { activeCount?: unknown }
+    expect(typeof body.activeCount).toBe('number')
   })
 
   test('GET /api/dashboard without prefix returns 404', async () => {
