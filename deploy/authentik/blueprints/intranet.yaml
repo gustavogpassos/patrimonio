@@ -50,207 +50,91 @@ entries:
     attrs:
       name: wiki-almoxarifado-editar
       is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki-almoxarifado]]
   - model: authentik_core.group
     identifiers:
       name: wiki-financeiro-editar
     attrs:
       name: wiki-financeiro-editar
       is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki-financeiro]]
   - model: authentik_core.group
     identifiers:
       name: wiki-ti-editar
     attrs:
       name: wiki-ti-editar
       is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki-ti]]
   - model: authentik_core.group
     identifiers:
       name: wiki-geral-editar
     attrs:
       name: wiki-geral-editar
       is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki]]
   - model: authentik_core.group
     identifiers:
       name: setor-almoxarifado
     attrs:
       name: setor-almoxarifado
       is_superuser: false
-  - model: authentik_core.group
-    identifiers:
-      name: setor-almoxarifado-editores
-    attrs:
-      name: setor-almoxarifado-editores
-      is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki]]
+        - !Find [authentik_core.group, [name, wiki-almoxarifado]]
+        - !Find [authentik_core.group, [name, chamados]]
   - model: authentik_core.group
     identifiers:
       name: setor-financeiro
     attrs:
       name: setor-financeiro
       is_superuser: false
-  - model: authentik_core.group
-    identifiers:
-      name: setor-financeiro-editores
-    attrs:
-      name: setor-financeiro-editores
-      is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki]]
+        - !Find [authentik_core.group, [name, wiki-financeiro]]
+        - !Find [authentik_core.group, [name, chamados]]
   - model: authentik_core.group
     identifiers:
       name: setor-ti
     attrs:
       name: setor-ti
       is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki]]
+        - !Find [authentik_core.group, [name, wiki-ti]]
+        - !Find [authentik_core.group, [name, wiki-almoxarifado]]
+        - !Find [authentik_core.group, [name, wiki-financeiro]]
+        - !Find [authentik_core.group, [name, patrimonio]]
+        - !Find [authentik_core.group, [name, chamados]]
+        - !Find [authentik_core.group, [name, chamados-atender]]
+  - model: authentik_core.group
+    identifiers:
+      name: setor-almoxarifado-editores
+    attrs:
+      name: setor-almoxarifado-editores
+      is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki-almoxarifado-editar]]
+  - model: authentik_core.group
+    identifiers:
+      name: setor-financeiro-editores
+    attrs:
+      name: setor-financeiro-editores
+      is_superuser: false
+      parents:
+        - !Find [authentik_core.group, [name, wiki-financeiro-editar]]
   - model: authentik_core.group
     identifiers:
       name: setor-ti-editores
     attrs:
       name: setor-ti-editores
       is_superuser: false
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, wiki-almoxarifado-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-    attrs:
-      child: !Find [authentik_core.group, [name, wiki-almoxarifado-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, wiki-financeiro-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-    attrs:
-      child: !Find [authentik_core.group, [name, wiki-financeiro-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, wiki-ti-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-ti]]
-    attrs:
-      child: !Find [authentik_core.group, [name, wiki-ti-editar]]
-      parent: !Find [authentik_core.group, [name, wiki-ti]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, wiki-geral-editar]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-    attrs:
-      child: !Find [authentik_core.group, [name, wiki-geral-editar]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado-editar]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-almoxarifado-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado-editar]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-financeiro]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-financeiro-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro-editar]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-financeiro-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro-editar]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-ti]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-ti]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-almoxarifado]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, wiki-financeiro]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, patrimonio]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, patrimonio]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, chamados]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, chamados-atender]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti]]
-      parent: !Find [authentik_core.group, [name, chamados-atender]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-ti-editar]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-ti-editar]]
-  - model: authentik_core.groupparentagenode
-    identifiers:
-      child: !Find [authentik_core.group, [name, setor-ti-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-geral-editar]]
-    attrs:
-      child: !Find [authentik_core.group, [name, setor-ti-editores]]
-      parent: !Find [authentik_core.group, [name, wiki-geral-editar]]
+      parents:
+        - !Find [authentik_core.group, [name, wiki-ti-editar]]
+        - !Find [authentik_core.group, [name, wiki-geral-editar]]
   - model: authentik_providers_oauth2.scopemapping
     id: intranet-groups
     identifiers:
