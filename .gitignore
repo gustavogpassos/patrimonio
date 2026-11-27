@@ -11,3 +11,7 @@ data
 !.env.example
 patrimonio.env
 .bun
+
+# O gitignore global ignora /docs. A documentação deste repositório entra no Git.
+!/docs/
+!/docs/**/**
