@@ -1,3 +1,4 @@
+import { BASE_PATH } from '@/base-path'
 import type {
   Category,
   DashboardData,
@@ -30,7 +31,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init)
+  const url = path.startsWith('/api/') ? `${BASE_PATH}${path}` : path
+  const res = await fetch(url, init)
   if (!res.ok) {
     let message = 'Não foi possível concluir a operação.'
     try {
@@ -172,7 +174,7 @@ export const api = {
     }),
 
   async downloadBackup() {
-    const res = await fetch('/api/backup')
+    const res = await fetch(`${BASE_PATH}/api/backup`)
     if (!res.ok) throw new ApiError('Não foi possível baixar o backup.')
     const blob = await res.blob()
     const cd = res.headers.get('Content-Disposition')

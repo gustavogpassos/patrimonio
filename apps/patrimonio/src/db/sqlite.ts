@@ -4,7 +4,8 @@ import { dirname, join } from 'node:path'
 import { migrate } from './migrate'
 
 let db: Database | null = null
-let dbPath = join(process.cwd(), 'data', 'patrimonio.db')
+let dbPath =
+  process.env.PATRIMONIO_DB ?? join(process.cwd(), 'data', 'patrimonio.db')
 
 export function getDbPath() {
   return dbPath

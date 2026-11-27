@@ -7,11 +7,12 @@ import { EquipmentFormPage } from '@/features/equipment/EquipmentFormPage'
 import { EquipmentPage } from '@/features/equipment/EquipmentPage'
 import { MaintenancePage } from '@/features/maintenance/MaintenancePage'
 import { SectorsPage } from '@/features/sectors/SectorsPage'
+import { BASE_PATH } from '@/base-path'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={BASE_PATH}>
       <Routes>
         <Route element={<AppShell />}>
           <Route index element={<DashboardPage />} />

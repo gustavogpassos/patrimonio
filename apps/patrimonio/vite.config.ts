@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  base: '/patrimonio/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -12,7 +13,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': {
+      '/patrimonio/api': {
         target: 'http://127.0.0.1:8787',
         changeOrigin: true,
       },

@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { BASE_PATH } from '@/base-path'
 import {
   cancelMaintenanceSchema,
   categorySchema,
@@ -42,6 +43,14 @@ const PORT = Number(process.env.PORT ?? 8787)
 const DIST = join(process.cwd(), 'dist')
 
 getDb()
+
+function stripBase(pathname: string): string | null {
+  if (pathname === BASE_PATH || pathname.startsWith(`${BASE_PATH}/`)) {
+    const rest = pathname.slice(BASE_PATH.length)
+    return rest.length === 0 ? '/' : rest
+  }
+  return null
+}
 
 function json(data: unknown, status = 200) {
   return Response.json(data, { status })
@@ -274,11 +283,17 @@ Bun.serve({
   port: PORT,
   async fetch(req) {
     const url = new URL(req.url)
-    if (url.pathname.startsWith('/api/')) {
+    const stripped = stripBase(url.pathname)
+    if (stripped === null) {
+      return new Response('Not Found', { status: 404 })
+    }
+    url.pathname = stripped
+
+    if (stripped.startsWith('/api/')) {
       return handleApi(req, url)
     }
 
-    const staticResponse = await serveStatic(url.pathname)
+    const staticResponse = await serveStatic(stripped)
     if (staticResponse) return staticResponse
 
     const index = Bun.file(join(DIST, 'index.html'))
