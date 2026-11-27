@@ -220,4 +220,13 @@ if [[ "$ti_parents" == *wiki-financeiro-editar* ]]; then
   exit 1
 fi
 
+effective_out="$($COMPOSE exec -T authentik-worker ak shell -c "$(cat "$ROOT/deploy/authentik/effective-groups.py")")"
+if ! printf '%s\n' "$effective_out" | grep -qx 'OK effective-groups'; then
+  echo "FAIL: effective-groups check" >&2
+  printf '%s\n' "$effective_out" >&2
+  $COMPOSE logs --tail=100 authentik-worker authentik >&2 || true
+  exit 1
+fi
+printf '%s\n' "$effective_out" | grep '^OK effective-groups$'
+
 echo "OK groups.test.sh"

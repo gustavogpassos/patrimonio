@@ -285,6 +285,17 @@ entries:
       initial_value: leitor
       initial_value_expression: false
       order: 1
+  - model: authentik_policies_expression.expressionpolicy
+    id: intranet-enrollment-validate
+    identifiers:
+      name: intranet-enrollment-validate
+    attrs:
+      name: intranet-enrollment-validate
+      expression: |
+        prompt = request.context.get("prompt_data") or {}
+        setor = prompt.get("setor")
+        papel = prompt.get("papel")
+        return setor in ("almoxarifado", "financeiro", "ti") and papel in ("leitor", "editor")
   - model: authentik_stages_prompt.promptstage
     id: intranet-enrollment-prompt
     identifiers:
@@ -294,6 +305,8 @@ entries:
       fields:
         - !KeyOf intranet-field-setor
         - !KeyOf intranet-field-papel
+      validation_policies:
+        - !KeyOf intranet-enrollment-validate
   - model: authentik_stages_user_write.userwritestage
     id: intranet-enrollment-write
     identifiers:
@@ -352,11 +365,11 @@ entries:
         papel = prompt.get("papel")
         user = request.context.get("pending_user")
         if not user or not getattr(user, "pk", None):
-            return True
+            return False
         if setor not in ("almoxarifado", "financeiro", "ti"):
-            return True
+            return False
         if papel not in ("leitor", "editor"):
-            return True
+            return False
         from authentik.core.models import Group
         Group.objects.get(name="setor-" + setor).users.add(user)
         if papel == "editor":
