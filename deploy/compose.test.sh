@@ -31,8 +31,40 @@ postgres_block="$(echo "${output}" | awk '
   found { print }
 ')"
 
-if echo "${postgres_block}" | grep -qE '[0-9]+:[0-9]+'; then
+postgres_publishes_port() {
+  local block="$1"
+  echo "$block" | grep -qE '[0-9]+:[0-9]+' && return 0
+  echo "$block" | grep -qE 'published:[[:space:]]+"?[0-9]+"?' && return 0
+  return 1
+}
+
+if postgres_publishes_port "${postgres_block}"; then
   echo "FAIL: postgres service has host port mapping"
+  exit 1
+fi
+
+fixture_v5_published_port="$(cat <<'EOF'
+  postgres:
+    ports:
+      - target: 5432
+        published: "5432"
+        protocol: tcp
+EOF
+)"
+
+if ! postgres_publishes_port "${fixture_v5_published_port}"; then
+  echo "FAIL: postgres port check missed a Compose v5 published port"
+  exit 1
+fi
+
+fixture_no_ports="$(cat <<'EOF'
+  postgres:
+    image: postgres:16
+EOF
+)"
+
+if postgres_publishes_port "${fixture_no_ports}"; then
+  echo "FAIL: postgres port check rejected a service with no ports"
   exit 1
 fi
 
