@@ -92,6 +92,22 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  wiki:
+    image: requarks/wiki:2.5.316
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: wiki
+      DB_PASS: ${WIKI_DB_PASSWORD}
+      DB_NAME: wiki
+    networks:
+      - intranet
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 networks:
   intranet:
 
