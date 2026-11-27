@@ -34,6 +34,64 @@ services:
     depends_on:
       - postgres
 
+  authentik:
+    image: ghcr.io/goauthentik/server:2025.12.4
+    command: server
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_POSTGRESQL__HOST: postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_DB_PASSWORD}
+      AUTHENTIK_WEB__PATH: /authentik/
+      AUTHENTIK_WEB__BASE_URL: http://${INTRANET_IP}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_ADMIN_PASSWORD}
+      AUTHENTIK_BOOTSTRAP_EMAIL: akadmin@localhost
+      AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      INTRANET_IP: ${INTRANET_IP}
+      PATRIMONIO_OIDC_SECRET: ${PATRIMONIO_OIDC_SECRET}
+      WIKI_OIDC_SECRET: ${WIKI_OIDC_SECRET}
+      CHAMADOS_OIDC_SECRET: ${CHAMADOS_OIDC_SECRET}
+    volumes:
+      - ./authentik/blueprints:/blueprints/custom:ro
+    networks:
+      - intranet
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:2025.12.4
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_POSTGRESQL__HOST: postgres
+      AUTHENTIK_POSTGRESQL__USER: authentik
+      AUTHENTIK_POSTGRESQL__NAME: authentik
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_DB_PASSWORD}
+      AUTHENTIK_WEB__PATH: /authentik/
+      AUTHENTIK_WEB__BASE_URL: http://${INTRANET_IP}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_ADMIN_PASSWORD}
+      AUTHENTIK_BOOTSTRAP_EMAIL: akadmin@localhost
+      AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      INTRANET_IP: ${INTRANET_IP}
+      PATRIMONIO_OIDC_SECRET: ${PATRIMONIO_OIDC_SECRET}
+      WIKI_OIDC_SECRET: ${WIKI_OIDC_SECRET}
+      CHAMADOS_OIDC_SECRET: ${CHAMADOS_OIDC_SECRET}
+    volumes:
+      - ./authentik/blueprints:/blueprints/custom:ro
+    networks:
+      - intranet
+    depends_on:
+      authentik:
+        condition: service_started
+    restart: unless-stopped
+
 networks:
   intranet:
 
