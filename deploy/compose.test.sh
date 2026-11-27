@@ -17,6 +17,8 @@ AUTHENTIK_DB_PASSWORD=test
 WIKI_DB_PASSWORD=test
 PATRIMONIO_DB_PASSWORD=test
 CHAMADOS_DB_PASSWORD=test
+SESSION_SECRET=test
+CHAMADOS_OIDC_SECRET=test
 EOF
 
 output="$(docker compose -f "${COMPOSE_FILE}" --env-file "${env_file}" config 2>&1)" || {
@@ -94,6 +96,27 @@ fi
 
 if [[ "${has_nginx_8081}" != true ]]; then
   echo "FAIL: missing nginx port mapping 8081:8081"
+  exit 1
+fi
+
+chamados_block="$(echo "${output}" | awk '
+  /^  chamados:/ { found=1; print; next }
+  found && /^  [a-zA-Z0-9_-]+:/ { exit }
+  found { print }
+')"
+
+if [[ -z "${chamados_block}" ]]; then
+  echo "FAIL: missing chamados service"
+  exit 1
+fi
+
+if postgres_publishes_port "${chamados_block}"; then
+  echo "FAIL: chamados service has host port mapping"
+  exit 1
+fi
+
+if ! echo "${chamados_block}" | grep -q 'postgres://chamados'; then
+  echo "FAIL: chamados service missing postgres://chamados DATABASE_URL"
   exit 1
 fi
 

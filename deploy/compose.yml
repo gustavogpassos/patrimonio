@@ -108,6 +108,25 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  chamados:
+    build:
+      context: ../apps/chamados
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://chamados:${CHAMADOS_DB_PASSWORD}@postgres:5432/chamados
+      SESSION_SECRET: ${SESSION_SECRET}
+      AUTHENTIK_ISSUER: http://authentik:9000/authentik/application/o/chamados/
+      AUTHENTIK_BROWSER_URL: http://${INTRANET_IP}
+      INTRANET_IP: ${INTRANET_IP}
+      CHAMADOS_OIDC_SECRET: ${CHAMADOS_OIDC_SECRET}
+      PORT: "8788"
+    networks:
+      - intranet
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 networks:
   intranet:
 
