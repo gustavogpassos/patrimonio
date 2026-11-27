@@ -1,3 +1,5 @@
+import { ShortcutHint } from '@/components/ShortcutHint'
+import { BASE_PATH } from '@/base-path'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -9,11 +11,13 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { api } from '@/lib/api'
+import { useShortcut } from '@/lib/shortcuts'
 import { cn } from '@/lib/utils'
 import {
   DatabaseBackup,
   FolderTree,
   LayoutDashboard,
+  LogOut,
   Menu,
   MonitorSmartphone,
   PanelLeftClose,
@@ -25,18 +29,30 @@ import {
 } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const COLLAPSE_KEY = 'patrimonio.nav-collapsed'
 
 const links = [
-  { to: '/', label: 'Painel', icon: LayoutDashboard, end: true },
-  { to: '/equipment', label: 'Equipamentos', icon: MonitorSmartphone },
-  { to: '/maintenance', label: 'Manutenções', icon: Wrench },
-  { to: '/sectors', label: 'Setores', icon: FolderTree },
-  { to: '/categories', label: 'Categorias', icon: Tags },
+  { to: '/', label: 'Painel', icon: LayoutDashboard, end: true, shortcut: 'p' },
+  { to: '/equipment', label: 'Equipamentos', icon: MonitorSmartphone, shortcut: 'e' },
+  { to: '/maintenance', label: 'Manutenções', icon: Wrench, shortcut: 'm' },
+  { to: '/sectors', label: 'Setores', icon: FolderTree, shortcut: 's' },
+  { to: '/categories', label: 'Categorias', icon: Tags, shortcut: 'c' },
 ]
+
+function MenuLabel({ label, shortcut }: { label: string; shortcut: string }) {
+  const index = label.toLocaleLowerCase('pt-BR').indexOf(shortcut)
+  if (index < 0) return label
+  return (
+    <>
+      {label.slice(0, index)}
+      <span className="underline decoration-1 underline-offset-4">{label[index]}</span>
+      {label.slice(index + 1)}
+    </>
+  )
+}
 
 function currentSection(pathname: string) {
   return (
@@ -52,6 +68,7 @@ function SidebarBody({
   onNavigate,
   onBackup,
   onRestore,
+  onLogout,
   header,
 }: {
   navId: string
@@ -59,6 +76,7 @@ function SidebarBody({
   onNavigate?: () => void
   onBackup: () => void
   onRestore: () => void
+  onLogout: () => void
   header: ReactNode
 }) {
   return (
@@ -69,12 +87,13 @@ function SidebarBody({
         aria-label="Principal"
         className="flex flex-1 flex-col gap-1 overflow-y-auto px-3"
       >
-        {links.map(({ to, label, icon: Icon, end }) => (
+        {links.map(({ to, label, icon: Icon, end, shortcut }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
-            title={collapsed ? label : undefined}
+            title={collapsed ? `${label} (Alt+${shortcut.toUpperCase()})` : undefined}
+            aria-keyshortcuts={`Alt+${shortcut.toUpperCase()}`}
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
@@ -87,7 +106,12 @@ function SidebarBody({
             }
           >
             <Icon className="size-4 shrink-0" />
-            <span className={cn('truncate', collapsed && 'sr-only')}>{label}</span>
+            <span className={cn('min-w-0 flex-1 truncate', collapsed && 'sr-only')}>
+              <MenuLabel label={label} shortcut={shortcut} />
+            </span>
+            <span className={cn('shrink-0', collapsed && 'hidden')}>
+              <ShortcutHint keys={`Alt ${shortcut.toUpperCase()}`} />
+            </span>
           </NavLink>
         ))}
       </nav>
@@ -111,6 +135,15 @@ function SidebarBody({
           <Upload className="size-4" />
           <span className={cn(collapsed && 'sr-only')}>Restaurar</span>
         </Button>
+        <Button
+          variant="outline"
+          title={collapsed ? 'Sair' : undefined}
+          className={cn('min-h-11 w-full', collapsed ? 'px-0' : 'justify-start')}
+          onClick={onLogout}
+        >
+          <LogOut className="size-4" />
+          <span className={cn(collapsed && 'sr-only')}>Sair</span>
+        </Button>
         <p className={cn('px-2 pt-1 text-xs text-muted-foreground', collapsed && 'sr-only')}>
           versão 0.1.0
         </p>
@@ -122,6 +155,12 @@ function SidebarBody({
 export function AppShell() {
   const fileRef = useRef<HTMLInputElement>(null)
   const location = useLocation()
+  const navigate = useNavigate()
+  useShortcut('p', () => navigate('/'), { alt: true, allowInField: true })
+  useShortcut('e', () => navigate('/equipment'), { alt: true, allowInField: true })
+  useShortcut('m', () => navigate('/maintenance'), { alt: true, allowInField: true })
+  useShortcut('s', () => navigate('/sectors'), { alt: true, allowInField: true })
+  useShortcut('c', () => navigate('/categories'), { alt: true, allowInField: true })
   const [mobileOpen, setMobileOpen] = useState(false)
   const [navPath, setNavPath] = useState(location.pathname)
   const [collapsed, setCollapsed] = useState(() => {
@@ -156,6 +195,11 @@ export function AppShell() {
       }
       return next
     })
+  }
+
+  async function handleLogout() {
+    await fetch(`${BASE_PATH}/api/auth/logout`, { method: 'POST' })
+    location.assign(`${BASE_PATH}/`)
   }
 
   async function handleBackup() {
@@ -198,6 +242,7 @@ export function AppShell() {
           collapsed={collapsed}
           onBackup={() => void handleBackup()}
           onRestore={openRestore}
+          onLogout={() => void handleLogout()}
           header={
             <div
               className={cn(
@@ -236,6 +281,7 @@ export function AppShell() {
               onNavigate={() => setMobileOpen(false)}
               onBackup={() => void handleBackup()}
               onRestore={openRestore}
+              onLogout={() => void handleLogout()}
               header={
                 <div className="flex items-start justify-between gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-4">
                   <div className="min-w-0">

@@ -1,4 +1,5 @@
-import { afterAll, describe, expect, test } from 'bun:test'
+import { SQL } from 'bun'
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test'
 import { Database } from 'bun:sqlite'
 import { existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -18,16 +19,49 @@ async function resetPostgres(url: string) {
   return pg
 }
 
+async function reseedCategories(url: string) {
+  const pg = await openPostgres(url)
+  await pg`
+    INSERT INTO categories (name, description, active, regular_maintenance, created_at, updated_at) VALUES
+      ('Computador', 'Desktop de mesa', 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Notebook', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Monitor', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Roteador', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Switch', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Impressora', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Nobreak', NULL, 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Periférico', 'Teclado, mouse, webcam, headset e similares', 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+      ('Outro', 'Demais equipamentos de informática', 1, 0, '2026-01-01 00:00:00', '2026-01-01 00:00:00')
+  `
+}
+
 if (!databaseUrl) {
   test.skip('Postgres ausente: defina DATABASE_URL', () => {})
 } else {
   const dir = join(process.cwd(), 'data', 'import-sqlite-test')
+  let lockClient: SQL | null = null
+  let reserved: Awaited<ReturnType<SQL['reserve']>> | null = null
+
+  beforeAll(async () => {
+    lockClient = new SQL(databaseUrl)
+    reserved = await lockClient.reserve()
+    await reserved.unsafe('SELECT pg_advisory_lock(871234)')
+  }, 30_000)
 
   afterAll(async () => {
-    await resetPostgres(databaseUrl)
-    await closePostgres()
-    rmSync(dir, { recursive: true, force: true })
-  })
+    try {
+      await resetPostgres(databaseUrl)
+      await reseedCategories(databaseUrl)
+      await closePostgres()
+    } finally {
+      if (reserved) {
+        await reserved.unsafe('SELECT pg_advisory_unlock(871234)')
+        await reserved.release()
+      }
+      if (lockClient) await lockClient.close()
+      rmSync(dir, { recursive: true, force: true })
+    }
+  }, 30_000)
 
   describe('importSqlite', () => {
     test('importa o sqlite uma vez e recusa a segunda', async () => {

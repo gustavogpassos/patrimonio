@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { migrate } from './migrate'
+import { usesPostgres } from './postgres'
 
 let db: Database | null = null
 let dbPath =
@@ -22,12 +23,7 @@ function configure(connection: Database) {
 
 export function openDatabase(path = dbPath): Database {
   const defaultPath = join(process.cwd(), 'data', 'patrimonio.db')
-  if (
-    process.env.DATABASE_URL &&
-    process.env.DATABASE_URL.length > 0 &&
-    (!process.env.PATRIMONIO_DB || process.env.PATRIMONIO_DB.length === 0) &&
-    path === defaultPath
-  ) {
+  if (usesPostgres() && path === defaultPath) {
     throw new Error('Com DATABASE_URL o patrimônio não abre SQLite.')
   }
   mkdirSync(dirname(path), { recursive: true })
@@ -41,6 +37,17 @@ export function getDb(): Database {
   if (!db) {
     db = openDatabase(dbPath)
   }
+  return db
+}
+
+let testEnvOwned = false
+
+export function useTestDatabase(path: string) {
+  closeDb()
+  process.env.PATRIMONIO_DB = path
+  testEnvOwned = true
+  dbPath = path
+  db = openDatabase(path)
   return db
 }
 
@@ -62,13 +69,10 @@ export function closeDb() {
     db.close()
     db = null
   }
-}
-
-export function useTestDatabase(path: string) {
-  closeDb()
-  dbPath = path
-  db = openDatabase(path)
-  return db
+  if (testEnvOwned) {
+    delete process.env.PATRIMONIO_DB
+    testEnvOwned = false
+  }
 }
 
 export function nullIfEmpty(value: string | null | undefined): string | null {

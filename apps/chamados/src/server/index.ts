@@ -11,7 +11,7 @@ import {
   type TicketPriority,
   type TicketState,
 } from '@/server/db/tickets'
-import { openPostgres } from '@/server/db/postgres'
+import { openPostgres, usesPostgres } from '@/server/db/postgres'
 import { getSqlite } from '@/server/db/sqlite'
 import {
   auxCookie,
@@ -34,7 +34,7 @@ const DEFAULT_AUTHENTIK_ISSUER =
   'http://authentik:9000/authentik/application/o/chamados/'
 const DIST = join(process.cwd(), 'dist')
 
-if (process.env.DATABASE_URL && !process.env.CHAMADOS_DB) {
+if (usesPostgres()) {
   await openPostgres(process.env.DATABASE_URL)
 } else {
   getSqlite()

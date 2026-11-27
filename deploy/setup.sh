@@ -25,11 +25,15 @@ rand() {
   openssl rand -base64 "$1" | tr -d '\n'
 }
 
-POSTGRES_PASSWORD="$(rand 24)"
-AUTHENTIK_DB_PASSWORD="$(rand 24)"
-WIKI_DB_PASSWORD="$(rand 24)"
-PATRIMONIO_DB_PASSWORD="$(rand 24)"
-CHAMADOS_DB_PASSWORD="$(rand 24)"
+hex24() {
+  openssl rand -hex 24 | tr -d '\n'
+}
+
+POSTGRES_PASSWORD="$(hex24)"
+AUTHENTIK_DB_PASSWORD="$(hex24)"
+WIKI_DB_PASSWORD="$(hex24)"
+PATRIMONIO_DB_PASSWORD="$(hex24)"
+CHAMADOS_DB_PASSWORD="$(hex24)"
 AUTHENTIK_SECRET_KEY="$(rand 48)"
 SESSION_SECRET="$(rand 32)"
 AUTHENTIK_BOOTSTRAP_TOKEN="$(rand 32)"

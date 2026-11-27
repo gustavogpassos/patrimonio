@@ -1,5 +1,5 @@
 import type { Database } from 'bun:sqlite'
-import { getPostgres } from './postgres'
+import { getPostgres, usesPostgres } from './postgres'
 import { getSqlite } from './sqlite'
 
 export const TICKET_STATES = [
@@ -36,11 +36,7 @@ export type TicketRow = {
 export type TicketWithComments = TicketRow & { comments: CommentRow[] }
 
 function usePostgres(): boolean {
-  return Boolean(
-    process.env.DATABASE_URL &&
-      process.env.DATABASE_URL.length > 0 &&
-      !process.env.CHAMADOS_DB,
-  )
+  return usesPostgres()
 }
 
 function mapTicket(row: Record<string, unknown>): TicketRow {

@@ -1,7 +1,8 @@
 import type { CategoryInput } from '@/lib/schemas'
 import type { Category } from '@/lib/types'
 import { AppError, wrapDb } from './errors'
-import { getDb, nullIfEmpty } from './sqlite'
+import { all, get, run } from './sql'
+import { nullIfEmpty } from './sqlite'
 
 type Row = {
   id: number
@@ -17,37 +18,35 @@ type Row = {
 
 function mapRow(row: Row): Category {
   return {
-    id: row.id,
+    id: Number(row.id),
     name: row.name,
     description: row.description,
-    active: row.active === 1,
-    regularMaintenance: row.regular_maintenance === 1,
-    maintenanceIntervalDays: row.maintenance_interval_days,
-    equipmentCount: row.equipment_count,
+    active: Number(row.active) === 1,
+    regularMaintenance: Number(row.regular_maintenance) === 1,
+    maintenanceIntervalDays:
+      row.maintenance_interval_days == null ? null : Number(row.maintenance_interval_days),
+    equipmentCount: Number(row.equipment_count),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
 }
 
-export function listCategories(includeInactive = false): Category[] {
-  return wrapDb(() => {
-    const db = getDb()
-    const rows = db
-      .query<Row, [number]>(
-        `SELECT c.*,
-          (SELECT COUNT(*) FROM equipment e WHERE e.category_id = c.id) AS equipment_count
-         FROM categories c
-         WHERE (? = 1 OR c.active = 1)
-         ORDER BY c.name COLLATE NOCASE`,
-      )
-      .all(includeInactive ? 1 : 0)
+export async function listCategories(includeInactive = false): Promise<Category[]> {
+  return wrapDb(async () => {
+    const rows = await all<Row>(
+      `SELECT c.*,
+        (SELECT COUNT(*) FROM equipment e WHERE e.category_id = c.id) AS equipment_count
+       FROM categories c
+       WHERE (? = 1 OR c.active = 1)
+       ORDER BY c.name COLLATE NOCASE`,
+      includeInactive ? 1 : 0,
+    )
     return rows.map(mapRow)
   })
 }
 
-export function saveCategory(input: CategoryInput & { id?: number }): Category {
-  return wrapDb(() => {
-    const db = getDb()
+export async function saveCategory(input: CategoryInput & { id?: number }): Promise<Category> {
+  return wrapDb(async () => {
     const name = input.name.trim()
     const description = nullIfEmpty(input.description)
     const active = input.active ? 1 : 0
@@ -55,25 +54,34 @@ export function saveCategory(input: CategoryInput & { id?: number }): Category {
     const interval = categoryInterval(input)
 
     if (input.id) {
-      db.query(
+      await run(
         `UPDATE categories
          SET name = ?, description = ?, active = ?,
              regular_maintenance = ?, maintenance_interval_days = ?,
              updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(name, description, active, regularMaintenance, interval, input.id)
+        name,
+        description,
+        active,
+        regularMaintenance,
+        interval,
+        input.id,
+      )
       return getCategory(input.id)
     }
 
-    const result = db
-      .query(
-        `INSERT INTO categories (
-           name, description, active, regular_maintenance, maintenance_interval_days,
-           created_at, updated_at
-         )
-         VALUES (?, ?, ?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
-      )
-      .run(name, description, active, regularMaintenance, interval)
+    const result = await run(
+      `INSERT INTO categories (
+         name, description, active, regular_maintenance, maintenance_interval_days,
+         created_at, updated_at
+       )
+       VALUES (?, ?, ?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
+      name,
+      description,
+      active,
+      regularMaintenance,
+      interval,
+    )
     return getCategory(Number(result.lastInsertRowid))
   })
 }
@@ -87,35 +95,34 @@ function categoryInterval(input: CategoryInput): number | null {
   return days
 }
 
-export function getCategory(id: number): Category {
-  return wrapDb(() => {
-    const db = getDb()
-    const row = db
-      .query<Row, [number]>(
-        `SELECT c.*,
-          (SELECT COUNT(*) FROM equipment e WHERE e.category_id = c.id) AS equipment_count
-         FROM categories c WHERE c.id = ?`,
-      )
-      .get(id)
+export async function getCategory(id: number): Promise<Category> {
+  return wrapDb(async () => {
+    const row = await get<Row>(
+      `SELECT c.*,
+        (SELECT COUNT(*) FROM equipment e WHERE e.category_id = c.id) AS equipment_count
+       FROM categories c WHERE c.id = ?`,
+      id,
+    )
     if (!row) throw new AppError('Categoria não encontrada.')
     return mapRow(row)
   })
 }
 
-export function deleteCategory(id: number) {
-  return wrapDb(() => {
-    const db = getDb()
-    const count = db
-      .query<{ c: number }, [number]>(
-        'SELECT COUNT(*) AS c FROM equipment WHERE category_id = ?',
-      )
-      .get(id)?.c ?? 0
-    if (count > 0) {
+export async function deleteCategory(id: number): Promise<void> {
+  return wrapDb(async () => {
+    const count =
+      (
+        await get<{ c: number }>(
+          'SELECT COUNT(*) AS c FROM equipment WHERE category_id = ?',
+          id,
+        )
+      )?.c ?? 0
+    if (Number(count) > 0) {
       throw new AppError(
         'Não é possível excluir: há equipamentos nesta categoria. Inative a categoria.',
       )
     }
-    const result = db.query('DELETE FROM categories WHERE id = ?').run(id)
+    const result = await run('DELETE FROM categories WHERE id = ?', id)
     if (result.changes === 0) throw new AppError('Categoria não encontrada.')
   })
 }

@@ -14,7 +14,8 @@ import type {
   Transfer,
 } from '@/lib/types'
 import { AppError, wrapDb } from './errors'
-import { getDb, nullIfEmpty } from './sqlite'
+import { all, get, run, transaction } from './sql'
+import { nullIfEmpty } from './sqlite'
 
 type EquipRow = {
   id: number
@@ -67,19 +68,22 @@ export const EQUIPMENT_SELECT = `
 
 export function mapEquipment(row: EquipRow): EquipmentListItem {
   return {
-    id: row.id,
+    id: Number(row.id),
     assetTag: row.asset_tag,
     name: row.name,
     description: row.description,
-    categoryId: row.category_id,
+    categoryId: Number(row.category_id),
     categoryName: row.category_name,
-    categoryActive: row.category_active === 1,
-    categoryRegularMaintenance: row.category_regular_maintenance === 1,
-    categoryMaintenanceIntervalDays: row.category_maintenance_interval_days,
+    categoryActive: Number(row.category_active) === 1,
+    categoryRegularMaintenance: Number(row.category_regular_maintenance) === 1,
+    categoryMaintenanceIntervalDays:
+      row.category_maintenance_interval_days == null
+        ? null
+        : Number(row.category_maintenance_interval_days),
     lastMaintenanceCompletedAt: row.last_maintenance_completed_at,
-    sectorId: row.sector_id,
+    sectorId: Number(row.sector_id),
     sectorName: row.sector_name,
-    sectorActive: row.sector_active === 1,
+    sectorActive: Number(row.sector_active) === 1,
     location: row.location,
     brand: row.brand,
     model: row.model,
@@ -104,15 +108,12 @@ function assertNotFuture(date: string, label: string) {
   }
 }
 
-export function nextAssetTag(): string {
-  return wrapDb(() => {
-    const db = getDb()
-    const rows = db
-      .query<{ asset_tag: string }, []>(
-        `SELECT asset_tag FROM equipment
-         WHERE asset_tag GLOB 'PAT-[0-9]*'`,
-      )
-      .all()
+export async function nextAssetTag(): Promise<string> {
+  return wrapDb(async () => {
+    const rows = await all<{ asset_tag: string }>(
+      `SELECT asset_tag FROM equipment
+       WHERE asset_tag GLOB 'PAT-[0-9]*'`,
+    )
     let max = 0
     for (const row of rows) {
       const match = /^PAT-(\d+)$/i.exec(row.asset_tag)
@@ -133,11 +134,10 @@ export type ListEquipmentParams = {
   pageSize?: number
 }
 
-export function listEquipment(
+export async function listEquipment(
   params: ListEquipmentParams = {},
-): Paginated<EquipmentListItem> {
-  return wrapDb(() => {
-    const db = getDb()
+): Promise<Paginated<EquipmentListItem>> {
+  return wrapDb(async () => {
     const page = Math.max(1, params.page ?? 1)
     let pageSize = params.pageSize ?? 20
     if (pageSize === 0) pageSize = 10_000
@@ -178,30 +178,31 @@ export function listEquipment(
           : 'e.asset_tag'
     const sortDir = params.order === 'asc' ? 'ASC' : 'DESC'
 
-    const total =
-      db
-        .query<{ c: number }, Array<string | number>>(
+    const total = Number(
+      (
+        await get<{ c: number }>(
           `SELECT COUNT(*) AS c FROM equipment e ${whereSql}`,
+          ...args,
         )
-        .get(...args)?.c ?? 0
+      )?.c ?? 0,
+    )
 
-    const rows = db
-      .query<EquipRow, Array<string | number>>(
-        `${EQUIPMENT_SELECT} ${whereSql}
-         ORDER BY ${sortCol} COLLATE NOCASE ${sortDir}, e.id DESC
-         LIMIT ? OFFSET ?`,
-      )
-      .all(...args, pageSize, offset)
+    const rows = await all<EquipRow>(
+      `${EQUIPMENT_SELECT} ${whereSql}
+       ORDER BY ${sortCol} COLLATE NOCASE ${sortDir}, e.id DESC
+       LIMIT ? OFFSET ?`,
+      ...args,
+      pageSize,
+      offset,
+    )
 
     return { items: rows.map(mapEquipment), total }
   })
 }
 
-function listTransfers(equipmentId: number): Transfer[] {
-  const db = getDb()
-  const rows = db
-    .query<
-      {
+async function listTransfers(equipmentId: number): Promise<Transfer[]> {
+  const rows = await all<
+    {
         id: number
         equipment_id: number
         from_sector_id: number | null
@@ -213,8 +214,7 @@ function listTransfers(equipmentId: number): Transfer[] {
         reason: string
         transferred_on: string
         created_at: string
-      },
-      [number]
+      }
     >(
       `SELECT t.*,
         origin.name AS from_sector_name,
@@ -224,15 +224,15 @@ function listTransfers(equipmentId: number): Transfer[] {
        JOIN sectors destination ON destination.id = t.to_sector_id
        WHERE t.equipment_id = ?
        ORDER BY t.transferred_on DESC, t.id DESC`,
-    )
-    .all(equipmentId)
+    equipmentId,
+  )
 
   return rows.map((row) => ({
-    id: row.id,
-    equipmentId: row.equipment_id,
-    fromSectorId: row.from_sector_id,
+    id: Number(row.id),
+    equipmentId: Number(row.equipment_id),
+    fromSectorId: row.from_sector_id == null ? null : Number(row.from_sector_id),
     fromSectorName: row.from_sector_name,
-    toSectorId: row.to_sector_id,
+    toSectorId: Number(row.to_sector_id),
     toSectorName: row.to_sector_name,
     fromLocation: row.from_location,
     toLocation: row.to_location,
@@ -242,11 +242,9 @@ function listTransfers(equipmentId: number): Transfer[] {
   }))
 }
 
-function listEquipmentMaintenance(equipmentId: number): Maintenance[] {
-  const db = getDb()
-  const rows = db
-    .query<
-      {
+async function listEquipmentMaintenance(equipmentId: number): Promise<Maintenance[]> {
+  const rows = await all<
+    {
         id: number
         equipment_id: number
         type: Maintenance['type']
@@ -262,18 +260,17 @@ function listEquipmentMaintenance(equipmentId: number): Maintenance[] {
         equipment_status_after: Maintenance['equipmentStatusAfter']
         created_at: string
         updated_at: string
-      },
-      [number]
+      }
     >(
       `SELECT * FROM maintenance
        WHERE equipment_id = ?
        ORDER BY opened_on DESC, id DESC`,
-    )
-    .all(equipmentId)
+    equipmentId,
+  )
 
   return rows.map((row) => ({
-    id: row.id,
-    equipmentId: row.equipment_id,
+    id: Number(row.id),
+    equipmentId: Number(row.equipment_id),
     type: row.type,
     state: row.state,
     openedOn: row.opened_on,
@@ -290,49 +287,39 @@ function listEquipmentMaintenance(equipmentId: number): Maintenance[] {
   }))
 }
 
-export function getEquipment(id: number): EquipmentDetail {
-  return wrapDb(() => {
-    const db = getDb()
-    const row = db
-      .query<EquipRow, [number]>(`${EQUIPMENT_SELECT} WHERE e.id = ?`)
-      .get(id)
+export async function getEquipment(id: number): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const row = await get<EquipRow>(`${EQUIPMENT_SELECT} WHERE e.id = ?`, id)
     if (!row) throw new AppError('Equipamento não encontrado.')
-    const maintenance = listEquipmentMaintenance(id)
+    const maintenance = await listEquipmentMaintenance(id)
     return {
       ...mapEquipment(row),
-      transfers: listTransfers(id),
+      transfers: await listTransfers(id),
       maintenance,
       hasOpenMaintenance: maintenance.some((item) => item.state === 'open'),
     }
   })
 }
 
-function assertActiveCategory(id: number) {
-  const db = getDb()
-  const row = db
-    .query<{ active: number }, [number]>('SELECT active FROM categories WHERE id = ?')
-    .get(id)
+async function assertActiveCategory(id: number) {
+  const row = await get<{ active: number }>('SELECT active FROM categories WHERE id = ?', id)
   if (!row) throw new AppError('Categoria não encontrada.')
-  if (row.active !== 1) throw new AppError('Selecione uma categoria ativa.')
+  if (Number(row.active) !== 1) throw new AppError('Selecione uma categoria ativa.')
 }
 
-function assertActiveSector(id: number) {
-  const db = getDb()
-  const row = db
-    .query<{ active: number }, [number]>('SELECT active FROM sectors WHERE id = ?')
-    .get(id)
+async function assertActiveSector(id: number) {
+  const row = await get<{ active: number }>('SELECT active FROM sectors WHERE id = ?', id)
   if (!row) throw new AppError('Setor não encontrado.')
-  if (row.active !== 1) throw new AppError('Selecione um setor ativo.')
+  if (Number(row.active) !== 1) throw new AppError('Selecione um setor ativo.')
 }
 
-export function createEquipment(input: CreateEquipmentInput): EquipmentDetail {
-  return wrapDb(() => {
-    const db = getDb()
+export async function createEquipment(input: CreateEquipmentInput): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
     if (input.status !== 'in_stock' && input.status !== 'in_use') {
       throw new AppError('Cadastro só aceita status Em estoque ou Em uso.')
     }
-    assertActiveCategory(input.categoryId)
-    assertActiveSector(input.sectorId)
+    await assertActiveCategory(input.categoryId)
+    await assertActiveSector(input.sectorId)
 
     const transferDate =
       input.acquiredOn && input.acquiredOn.length > 0
@@ -340,57 +327,57 @@ export function createEquipment(input: CreateEquipmentInput): EquipmentDetail {
         : todayLocal()
     assertNotFuture(transferDate, 'Data de aquisição')
 
-    const tx = db.transaction(() => {
-      const result = db
-        .query(
-          `INSERT INTO equipment (
+    const id = await transaction(async () => {
+      const result = await run(
+        `INSERT INTO equipment (
             asset_tag, name, description, category_id, sector_id, location,
             brand, model, serial_number, status, acquired_on, acquisition_value_cents,
             supplier, invoice, warranty_until, notes,
             created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
-        )
-        .run(
-          input.assetTag.trim(),
-          input.name.trim(),
-          nullIfEmpty(input.description),
-          input.categoryId,
-          input.sectorId,
-          nullIfEmpty(input.location),
-          nullIfEmpty(input.brand),
-          nullIfEmpty(input.model),
-          nullIfEmpty(input.serialNumber),
-          input.status,
-          nullIfEmpty(input.acquiredOn),
-          input.acquisitionValueCents ?? null,
-          nullIfEmpty(input.supplier),
-          nullIfEmpty(input.invoice),
-          nullIfEmpty(input.warrantyUntil),
-          nullIfEmpty(input.notes),
-        )
+        input.assetTag.trim(),
+        input.name.trim(),
+        nullIfEmpty(input.description),
+        input.categoryId,
+        input.sectorId,
+        nullIfEmpty(input.location),
+        nullIfEmpty(input.brand),
+        nullIfEmpty(input.model),
+        nullIfEmpty(input.serialNumber),
+        input.status,
+        nullIfEmpty(input.acquiredOn),
+        input.acquisitionValueCents ?? null,
+        nullIfEmpty(input.supplier),
+        nullIfEmpty(input.invoice),
+        nullIfEmpty(input.warrantyUntil),
+        nullIfEmpty(input.notes),
+      )
 
-      const id = Number(result.lastInsertRowid)
-      db.query(
+      const inserted = Number(result.lastInsertRowid)
+      await run(
         `INSERT INTO transfers (
           equipment_id, from_sector_id, to_sector_id,
           from_location, to_location, reason, transferred_on, created_at
         ) VALUES (?, NULL, ?, NULL, ?, 'Cadastro inicial', ?, datetime('now','localtime'))`,
-      ).run(id, input.sectorId, nullIfEmpty(input.location), transferDate)
-      return id
+        inserted,
+        input.sectorId,
+        nullIfEmpty(input.location),
+        transferDate,
+      )
+      return inserted
     })
 
-    const id = tx()
     return getEquipment(id)
   })
 }
 
-export function updateEquipment(
+export async function updateEquipment(
   id: number,
   input: UpdateEquipmentInput,
-): EquipmentDetail {
-  return wrapDb(() => {
-    const current = getEquipment(id)
-    assertActiveCategory(input.categoryId)
+): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
+    await assertActiveCategory(input.categoryId)
     if (input.acquiredOn) assertNotFuture(input.acquiredOn, 'Data de aquisição')
 
     let status = current.status
@@ -401,8 +388,7 @@ export function updateEquipment(
       status = input.status
     }
 
-    const db = getDb()
-    db.query(
+    await run(
       `UPDATE equipment SET
         asset_tag = ?, name = ?, description = ?, category_id = ?,
         brand = ?, model = ?, serial_number = ?, status = ?,
@@ -410,7 +396,6 @@ export function updateEquipment(
         supplier = ?, invoice = ?, warranty_until = ?, notes = ?,
         updated_at = datetime('now','localtime')
        WHERE id = ?`,
-    ).run(
       input.assetTag.trim(),
       input.name.trim(),
       nullIfEmpty(input.description),
@@ -431,35 +416,33 @@ export function updateEquipment(
   })
 }
 
-export function markEquipmentInUse(id: number): EquipmentDetail {
-  return wrapDb(() => {
-    const current = getEquipment(id)
+export async function markEquipmentInUse(id: number): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
     if (current.status === 'in_use') return current
     if (current.status !== 'in_stock') {
       throw new AppError('Só é possível colocar em uso um equipamento que está em estoque.')
     }
-    getDb()
-      .query(
-        `UPDATE equipment
-         SET status = 'in_use', updated_at = datetime('now','localtime')
-         WHERE id = ?`,
-      )
-      .run(id)
+    await run(
+      `UPDATE equipment
+       SET status = 'in_use', updated_at = datetime('now','localtime')
+       WHERE id = ?`,
+      id,
+    )
     return getEquipment(id)
   })
 }
 
-export function transferEquipment(
+export async function transferEquipment(
   id: number,
   input: TransferInput,
-): EquipmentDetail {
-  return wrapDb(() => {
-    const db = getDb()
-    const current = getEquipment(id)
+): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
     if (current.status === 'written_off') {
       throw new AppError('Equipamento baixado não pode ser transferido.')
     }
-    assertActiveSector(input.toSectorId)
+    await assertActiveSector(input.toSectorId)
     assertNotFuture(input.transferredOn, 'Data da movimentação')
 
     const toLocation = nullIfEmpty(input.toLocation)
@@ -472,13 +455,12 @@ export function transferEquipment(
       throw new AppError('Data da movimentação não pode ser anterior à aquisição.')
     }
 
-    const tx = db.transaction(() => {
-      db.query(
+    await transaction(async () => {
+      await run(
         `INSERT INTO transfers (
           equipment_id, from_sector_id, to_sector_id,
           from_location, to_location, reason, transferred_on, created_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now','localtime'))`,
-      ).run(
         id,
         current.sectorId,
         input.toSectorId,
@@ -487,21 +469,25 @@ export function transferEquipment(
         input.reason.trim(),
         input.transferredOn,
       )
-      db.query(
+      await run(
         `UPDATE equipment
          SET sector_id = ?, location = ?, updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(input.toSectorId, toLocation, id)
+        input.toSectorId,
+        toLocation,
+        id,
+      )
     })
-    tx()
     return getEquipment(id)
   })
 }
 
-export function writeOffEquipment(id: number, input: WriteOffInput): EquipmentDetail {
-  return wrapDb(() => {
-    const db = getDb()
-    const current = getEquipment(id)
+export async function writeOffEquipment(
+  id: number,
+  input: WriteOffInput,
+): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
     if (current.status === 'written_off') {
       throw new AppError('Equipamento já está baixado.')
     }
@@ -512,40 +498,42 @@ export function writeOffEquipment(id: number, input: WriteOffInput): EquipmentDe
     }
     assertNotFuture(input.writtenOffOn, 'Data da baixa')
 
-    db.query(
+    await run(
       `UPDATE equipment
        SET status = 'written_off', write_off_reason = ?, written_off_on = ?,
            updated_at = datetime('now','localtime')
        WHERE id = ?`,
-    ).run(input.writeOffReason.trim(), input.writtenOffOn, id)
+      input.writeOffReason.trim(),
+      input.writtenOffOn,
+      id,
+    )
     return getEquipment(id)
   })
 }
 
-export function reactivateEquipment(id: number): EquipmentDetail {
-  return wrapDb(() => {
-    const db = getDb()
-    const current = getEquipment(id)
+export async function reactivateEquipment(id: number): Promise<EquipmentDetail> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
     if (current.status !== 'written_off') {
       throw new AppError('Somente equipamentos baixados podem ser reativados.')
     }
-    db.query(
+    await run(
       `UPDATE equipment
        SET status = 'in_stock', write_off_reason = NULL, written_off_on = NULL,
            updated_at = datetime('now','localtime')
        WHERE id = ?`,
-    ).run(id)
+      id,
+    )
     return getEquipment(id)
   })
 }
 
-export function deleteEquipment(id: number, assetTagConfirmation: string) {
-  return wrapDb(() => {
-    const db = getDb()
-    const current = getEquipment(id)
+export async function deleteEquipment(id: number, assetTagConfirmation: string): Promise<void> {
+  return wrapDb(async () => {
+    const current = await getEquipment(id)
     if (current.assetTag.toLowerCase() !== assetTagConfirmation.trim().toLowerCase()) {
       throw new AppError('Tombamento de confirmação não confere.')
     }
-    db.query('DELETE FROM equipment WHERE id = ?').run(id)
+    await run('DELETE FROM equipment WHERE id = ?', id)
   })
 }

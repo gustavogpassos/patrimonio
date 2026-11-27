@@ -4,6 +4,13 @@ import { join } from 'node:path'
 
 let client: SQL | null = null
 
+export function usesPostgres(): boolean {
+  const hasUrl = Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.length > 0)
+  const hasPassword = Boolean(process.env.PGPASSWORD && process.env.PGPASSWORD.length > 0)
+  const dbUnset = !process.env.PATRIMONIO_DB || process.env.PATRIMONIO_DB.length === 0
+  return (hasUrl || hasPassword) && dbUnset
+}
+
 function migrationDescription(version: number): string {
   if (version === 1) return 'schema postgres'
   return `migration ${version}`
@@ -57,12 +64,29 @@ async function applyMigrations(sql: SQL) {
   }
 }
 
-export async function openPostgres(databaseUrl: string): Promise<SQL> {
+export async function openPostgres(databaseUrl?: string): Promise<SQL> {
   if (client) return client
 
-  const sql = new SQL(databaseUrl)
+  const password = process.env.PGPASSWORD
+  const sql =
+    password && password.length > 0
+      ? new SQL({
+          hostname: process.env.PGHOST,
+          port: 5432,
+          username: process.env.PGUSER,
+          password,
+          database: process.env.PGDATABASE,
+        })
+      : new SQL(databaseUrl ?? process.env.DATABASE_URL!)
   await applyMigrations(sql)
   client = sql
+  return client
+}
+
+export function getPostgres(): SQL {
+  if (!client) {
+    throw new Error('Postgres não inicializado')
+  }
   return client
 }
 

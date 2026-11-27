@@ -115,6 +115,7 @@ adopt_legacy_database() {
   [[ "$old" == "$new" ]] && return 0
   mkdir -p "$app/data"
   cp -a "$old" "$new"
+  ADOPTED=1
   [[ -f "${old}-wal" ]] && cp -a "${old}-wal" "${new}-wal"
   [[ -f "${old}-shm" ]] && cp -a "${old}-shm" "${new}-shm"
   log "Banco antigo copiado de ${old} para ${new}. O arquivo antigo permanece."
@@ -357,7 +358,7 @@ wait_until_up() {
   local port="$1"
   local i
   for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-    if curl -fsS "http://127.0.0.1:${port}/" >/dev/null 2>&1; then
+    if curl -fsS "http://127.0.0.1:${port}/patrimonio/" >/dev/null 2>&1; then
       return 0
     fi
     sleep 0.4
@@ -415,16 +416,16 @@ main() {
     if [[ "$(id -u)" -eq 0 ]]; then
       journalctl -u "${SERVICE_NAME}.service" -n 40 --no-pager || true
     fi
-    die "O processo não respondeu em http://127.0.0.1:${port}/."
+    die "O processo não respondeu em http://127.0.0.1:${port}/patrimonio/."
   fi
 
   local ip
   ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
   [[ -n "$ip" ]] || ip="127.0.0.1"
-  log "Patrimônio no ar: http://${ip}:${port}"
+  log "Patrimônio no ar: http://${ip}:${port}/patrimonio/"
   log "Instalação: ${dir}"
   log "Banco desta máquina: ${dir}/data/patrimonio.db"
-  if [[ -f "$dir/data/patrimonio.db" && "$before" != missing ]]; then
+  if [[ "${ADOPTED:-0}" == 1 || "$before" != missing ]]; then
     log "Atualização concluída. Os dados que já estavam no banco continuam nele."
   else
     log "Primeira inicialização. O banco foi criado vazio, só com as categorias iniciais."

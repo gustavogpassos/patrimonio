@@ -26,9 +26,9 @@ export function mapSqliteError(err: unknown): Error {
   return new AppError('Não foi possível concluir a operação.')
 }
 
-export function wrapDb<T>(fn: () => T): T {
+export async function wrapDb<T>(fn: () => Promise<T>): Promise<T> {
   try {
-    return fn()
+    return await fn()
   } catch (err) {
     throw mapSqliteError(err)
   }

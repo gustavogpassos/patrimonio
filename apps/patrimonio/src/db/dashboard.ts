@@ -2,11 +2,10 @@ import { regularMaintenanceInfo, todayLocal } from '@/lib/dates'
 import type { DashboardData, EquipmentStatus, Maintenance } from '@/lib/types'
 import { wrapDb } from './errors'
 import { EQUIPMENT_SELECT, mapEquipment } from './equipment'
-import { getDb } from './sqlite'
+import { all, get } from './sql'
 
-export function dashboard(): DashboardData {
-  return wrapDb(() => {
-    const db = getDb()
+export async function dashboard(): Promise<DashboardData> {
+  return wrapDb(async () => {
     const today = todayLocal()
     const in30 = (() => {
       const date = new Date(`${today}T12:00:00`)
@@ -17,40 +16,38 @@ export function dashboard(): DashboardData {
       return `${y}-${m}-${day}`
     })()
 
-    const counts = db
-      .query<{
-        active_count: number
-        in_use: number
-        in_stock: number
-        in_maintenance: number
-        written_off: number
-        total_value: number | null
-      }, []>(
-        `SELECT
-          SUM(CASE WHEN status <> 'written_off' THEN 1 ELSE 0 END) AS active_count,
-          SUM(CASE WHEN status = 'in_use' THEN 1 ELSE 0 END) AS in_use,
-          SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) AS in_stock,
-          SUM(CASE WHEN status = 'in_maintenance' THEN 1 ELSE 0 END) AS in_maintenance,
-          SUM(CASE WHEN status = 'written_off' THEN 1 ELSE 0 END) AS written_off,
-          SUM(CASE WHEN status <> 'written_off' THEN ifnull(acquisition_value_cents, 0) ELSE 0 END) AS total_value
-         FROM equipment`,
-      )
-      .get()
+    const counts = await get<{
+      active_count: number
+      in_use: number
+      in_stock: number
+      in_maintenance: number
+      written_off: number
+      total_value: number | null
+    }>(
+      `SELECT
+        SUM(CASE WHEN status <> 'written_off' THEN 1 ELSE 0 END) AS active_count,
+        SUM(CASE WHEN status = 'in_use' THEN 1 ELSE 0 END) AS in_use,
+        SUM(CASE WHEN status = 'in_stock' THEN 1 ELSE 0 END) AS in_stock,
+        SUM(CASE WHEN status = 'in_maintenance' THEN 1 ELSE 0 END) AS in_maintenance,
+        SUM(CASE WHEN status = 'written_off' THEN 1 ELSE 0 END) AS written_off,
+        SUM(CASE WHEN status <> 'written_off' THEN ifnull(acquisition_value_cents, 0) ELSE 0 END) AS total_value
+       FROM equipment`,
+    )
 
-    const expiredWarranties = db
-      .query<Parameters<typeof mapEquipment>[0], [string]>(
+    const expiredWarranties = (
+      await all<Parameters<typeof mapEquipment>[0]>(
         `${EQUIPMENT_SELECT}
          WHERE e.status <> 'written_off'
            AND e.warranty_until IS NOT NULL
            AND e.warranty_until < ?
          ORDER BY e.warranty_until ASC
          LIMIT 10`,
+        today,
       )
-      .all(today)
-      .map(mapEquipment)
+    ).map(mapEquipment)
 
-    const warrantiesDueSoon = db
-      .query<Parameters<typeof mapEquipment>[0], [string, string]>(
+    const warrantiesDueSoon = (
+      await all<Parameters<typeof mapEquipment>[0]>(
         `${EQUIPMENT_SELECT}
          WHERE e.status <> 'written_off'
            AND e.warranty_until IS NOT NULL
@@ -58,17 +55,17 @@ export function dashboard(): DashboardData {
            AND e.warranty_until <= ?
          ORDER BY e.warranty_until ASC
          LIMIT 10`,
+        today,
+        in30,
       )
-      .all(today, in30)
-      .map(mapEquipment)
+    ).map(mapEquipment)
 
-    const regular = db
-      .query<Parameters<typeof mapEquipment>[0], []>(
+    const regular = (
+      await all<Parameters<typeof mapEquipment>[0]>(
         `${EQUIPMENT_SELECT}
          WHERE e.status <> 'written_off' AND c.regular_maintenance = 1`,
       )
-      .all()
-      .map(mapEquipment)
+    ).map(mapEquipment)
     const overdueRegularMaintenance = regular
       .flatMap((item) => {
         const info = regularMaintenanceInfo({
@@ -83,8 +80,8 @@ export function dashboard(): DashboardData {
       .slice(0, 10)
       .map((entry) => entry.item)
 
-    const openMaintenance = db
-      .query<
+    const openMaintenance = (
+      await all<
         {
           id: number
           equipment_id: number
@@ -103,8 +100,7 @@ export function dashboard(): DashboardData {
           equipment_status_after: Maintenance['equipmentStatusAfter']
           created_at: string
           updated_at: string
-        },
-        []
+        }
       >(
         `SELECT m.*,
           e.name AS equipment_name,
@@ -114,8 +110,7 @@ export function dashboard(): DashboardData {
          WHERE m.state = 'open'
          ORDER BY m.opened_on DESC, m.id DESC`,
       )
-      .all()
-      .map((row) => ({
+    ).map((row) => ({
         id: row.id,
         equipmentId: row.equipment_id,
         equipmentName: row.equipment_name,
@@ -135,8 +130,8 @@ export function dashboard(): DashboardData {
         updatedAt: row.updated_at,
       }))
 
-    const recentTransfers = db
-      .query<
+    const recentTransfers = (
+      await all<
         {
           id: number
           equipment_id: number
@@ -151,8 +146,7 @@ export function dashboard(): DashboardData {
           reason: string
           transferred_on: string
           created_at: string
-        },
-        []
+        }
       >(
         `SELECT t.*,
           e.name AS equipment_name,
@@ -166,8 +160,7 @@ export function dashboard(): DashboardData {
          ORDER BY t.transferred_on DESC, t.id DESC
          LIMIT 8`,
       )
-      .all()
-      .map((row) => ({
+    ).map((row) => ({
         id: row.id,
         equipmentId: row.equipment_id,
         equipmentName: row.equipment_name,
@@ -184,12 +177,12 @@ export function dashboard(): DashboardData {
       }))
 
     return {
-      activeCount: counts?.active_count ?? 0,
-      inUse: counts?.in_use ?? 0,
-      inStock: counts?.in_stock ?? 0,
-      inMaintenance: counts?.in_maintenance ?? 0,
-      writtenOff: counts?.written_off ?? 0,
-      totalValueCents: counts?.total_value ?? 0,
+      activeCount: Number(counts?.active_count ?? 0),
+      inUse: Number(counts?.in_use ?? 0),
+      inStock: Number(counts?.in_stock ?? 0),
+      inMaintenance: Number(counts?.in_maintenance ?? 0),
+      writtenOff: Number(counts?.written_off ?? 0),
+      totalValueCents: Number(counts?.total_value ?? 0),
       expiredWarranties,
       warrantiesDueSoon,
       overdueRegularMaintenance,

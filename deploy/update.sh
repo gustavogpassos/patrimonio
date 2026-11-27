@@ -41,7 +41,26 @@ if ! "${COMPOSE[@]}" up -d; then
   fail
 fi
 
-health="$("${COMPOSE[@]}" ps --format '{{.Health}}')"
-if grep -qx 'unhealthy' <<<"$health"; then
-  fail
-fi
+deadline=$(( $(date +%s) + 180 ))
+while true; do
+  ps_out="$("${COMPOSE[@]}" ps --format '{{.Service}} {{.Health}}')"
+  starting=0
+  while IFS= read -r line; do
+    [[ -z "${line}" ]] && continue
+    health="${line##* }"
+    [[ -z "${health}" ]] && continue
+    if [[ "${health}" == unhealthy ]]; then
+      fail
+    fi
+    if [[ "${health}" == starting ]]; then
+      starting=1
+    fi
+  done <<<"${ps_out}"
+  if [[ "${starting}" -eq 0 ]]; then
+    break
+  fi
+  if (( $(date +%s) >= deadline )); then
+    fail
+  fi
+  sleep 2
+done

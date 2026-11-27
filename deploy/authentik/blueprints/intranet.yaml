@@ -329,7 +329,7 @@ entries:
       title: Cadastro da intranet
       slug: intranet-enrollment
       designation: enrollment
-      authentication: none
+      authentication: require_superuser
   - model: authentik_flows.flowstagebinding
     identifiers:
       target: !KeyOf intranet-enrollment
@@ -400,6 +400,7 @@ entries:
         user = request.context["pending_user"]
         if user.attributes.get("reset_password") == True:
             user.attributes["reset_password"] = False
+            user.save()
             return True
         return False
   - model: authentik_stages_prompt.promptstage
@@ -427,6 +428,7 @@ entries:
     attrs:
       order: 25
       re_evaluate_policies: true
+      policy_engine_mode: all
   - model: authentik_policies.policybinding
     identifiers:
       order: 0
@@ -434,6 +436,32 @@ entries:
     attrs:
       order: 0
       policy: !KeyOf reset-password-check
+  - model: authentik_policies_expression.expressionpolicy
+    id: intranet-assign-setor
+    identifiers:
+      name: intranet-assign-setor
+    attrs:
+      name: intranet-assign-setor
+      expression: |
+        user = request.context["pending_user"]
+        if user.is_superuser:
+            return True
+        setor = (user.attributes or {}).get("setor")
+        papel = (user.attributes or {}).get("papel")
+        if setor not in ("almoxarifado", "financeiro", "ti") or papel not in ("leitor", "editor"):
+            return False
+        from authentik.core.models import Group
+        Group.objects.get(name="setor-" + setor).users.add(user)
+        if papel == "editor":
+            Group.objects.get(name="setor-" + setor + "-editores").users.add(user)
+        return True
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 10
+      target: !KeyOf intranet-reset-password-prompt-binding
+    attrs:
+      order: 10
+      policy: !KeyOf intranet-assign-setor
   - model: authentik_flows.flowstagebinding
     id: intranet-reset-password-write-binding
     identifiers:
@@ -450,3 +478,25 @@ entries:
     attrs:
       order: 0
       policy: !KeyOf reset-password-update
+  - model: authentik_policies_expression.expressionpolicy
+    id: intranet-admin-reset-password
+    identifiers:
+      name: intranet-admin-reset-password
+    attrs:
+      name: intranet-admin-reset-password
+      expression: |
+        pending = request.context.get("pending_user")
+        if pending is None or not request.user.is_superuser or pending.pk == request.user.pk:
+            return True
+        attrs = dict(pending.attributes or {})
+        attrs["reset_password"] = True
+        pending.attributes = attrs
+        pending.save()
+        return True
+  - model: authentik_policies.policybinding
+    identifiers:
+      order: 0
+      target: !Find [authentik_flows.flowstagebinding, [target, !Find [authentik_flows.flow, [slug, default-password-change]]], [stage, !Find [authentik_stages_user_write.userwritestage, [name, default-password-change-write]]]]
+    attrs:
+      order: 0
+      policy: !KeyOf intranet-admin-reset-password

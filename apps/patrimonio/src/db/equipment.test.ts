@@ -21,13 +21,13 @@ import { closeDb, useTestDatabase } from './sqlite'
 
 const dir = join(process.cwd(), 'data', 'test-tmp')
 
-function setup() {
+async function setup() {
   mkdirSync(dir, { recursive: true })
   const path = join(dir, `t-${Date.now()}-${Math.random()}.db`)
   useTestDatabase(path)
-  const category = listCategories(true)[0]!
-  const sectorA = saveSector({ name: 'IT', description: null, active: true })
-  const sectorB = saveSector({ name: 'Finance', description: null, active: true })
+  const category = (await listCategories(true))[0]!
+  const sectorA = await saveSector({ name: 'IT', description: null, active: true })
+  const sectorB = await saveSector({ name: 'Finance', description: null, active: true })
   return { category, sectorA, sectorB }
 }
 
@@ -36,10 +36,10 @@ afterEach(() => {
 })
 
 describe('equipment rules', () => {
-  test('next asset tag', () => {
-    const { category, sectorA } = setup()
-    expect(nextAssetTag()).toBe('PAT-000001')
-    createEquipment({
+  test('next asset tag', async () => {
+    const { category, sectorA } = await setup()
+    expect(await nextAssetTag()).toBe('PAT-000001')
+    await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -57,11 +57,11 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    expect(nextAssetTag()).toBe('PAT-000002')
+    expect(await nextAssetTag()).toBe('PAT-000002')
   })
 
-  test('duplicate asset tag', () => {
-    const { category, sectorA } = setup()
+  test('duplicate asset tag', async () => {
+    const { category, sectorA } = await setup()
     const base = {
       assetTag: 'PAT-000001',
       name: 'PC 1',
@@ -80,14 +80,14 @@ describe('equipment rules', () => {
       warrantyUntil: null as string | null,
       notes: null as string | null,
     }
-    createEquipment(base)
-    expect(() => createEquipment({ ...base, name: 'PC 2' })).toThrow(
+    await createEquipment(base)
+    await expect(createEquipment({ ...base, name: 'PC 2' })).rejects.toThrow(
       'Já existe um equipamento com este tombamento.',
     )
   })
 
-  test('duplicate serial number', () => {
-    const { category, sectorA } = setup()
+  test('duplicate serial number', async () => {
+    const { category, sectorA } = await setup()
     const base = {
       assetTag: 'PAT-000001',
       name: 'PC 1',
@@ -106,15 +106,14 @@ describe('equipment rules', () => {
       warrantyUntil: null as string | null,
       notes: null as string | null,
     }
-    createEquipment(base)
-    expect(() =>
-      createEquipment({ ...base, assetTag: 'PAT-000002', name: 'PC 2' }),
-    ).toThrow('Já existe um equipamento com este número de série.')
+    await createEquipment(base)
+    await expect(createEquipment({ ...base, assetTag: 'PAT-000002', name: 'PC 2' }),
+    ).rejects.toThrow('Já existe um equipamento com este número de série.')
   })
 
-  test('cannot delete an occupied sector', () => {
-    const { category, sectorA } = setup()
-    createEquipment({
+  test('cannot delete an occupied sector', async () => {
+    const { category, sectorA } = await setup()
+    await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -132,12 +131,12 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    expect(() => deleteSector(sectorA.id)).toThrow(/Inative o setor/)
+    await expect(deleteSector(sectorA.id)).rejects.toThrow(/Inative o setor/)
   })
 
-  test('transfer and same destination', () => {
-    const { category, sectorA, sectorB } = setup()
-    const created = createEquipment({
+  test('transfer and same destination', async () => {
+    const { category, sectorA, sectorB } = await setup()
+    const created = await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -155,16 +154,15 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    expect(() =>
-      transferEquipment(created.id, {
+    await expect(transferEquipment(created.id, {
         toSectorId: sectorA.id,
         toLocation: 'Room 1',
         transferredOn: '2024-02-01',
         reason: 'Same place',
       }),
-    ).toThrow('Setor e localização de destino são iguais aos atuais.')
+    ).rejects.toThrow('Setor e localização de destino são iguais aos atuais.')
 
-    const moved = transferEquipment(created.id, {
+    const moved = await transferEquipment(created.id, {
       toSectorId: sectorB.id,
       toLocation: 'Room 2',
       transferredOn: '2024-02-01',
@@ -174,9 +172,9 @@ describe('equipment rules', () => {
     expect(moved.transfers.length).toBe(2)
   })
 
-  test('only one open maintenance and cancellation', () => {
-    const { category, sectorA } = setup()
-    const created = createEquipment({
+  test('only one open maintenance and cancellation', async () => {
+    const { category, sectorA } = await setup()
+    const created = await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -194,7 +192,7 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    const record = openMaintenance({
+    const record = await openMaintenance({
       equipmentId: created.id,
       type: 'corrective',
       openedOn: '2026-11-01',
@@ -202,9 +200,8 @@ describe('equipment rules', () => {
       costCents: null,
       serviceProvider: null,
     })
-    expect(getEquipment(created.id).status).toBe('in_maintenance')
-    expect(() =>
-      openMaintenance({
+    expect((await getEquipment(created.id)).status).toBe('in_maintenance')
+    await expect(openMaintenance({
         equipmentId: created.id,
         type: 'preventive',
         openedOn: '2026-11-02',
@@ -212,15 +209,15 @@ describe('equipment rules', () => {
         costCents: null,
         serviceProvider: null,
       }),
-    ).toThrow()
+    ).rejects.toThrow()
 
-    cancelMaintenance(record.id, { cancellationReason: 'False alarm' })
-    expect(getEquipment(created.id).status).toBe('in_use')
+    await cancelMaintenance(record.id, { cancellationReason: 'False alarm' })
+    expect((await getEquipment(created.id)).status).toBe('in_use')
   })
 
-  test('completion with write-off', () => {
-    const { category, sectorA } = setup()
-    const created = createEquipment({
+  test('completion with write-off', async () => {
+    const { category, sectorA } = await setup()
+    const created = await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -238,7 +235,7 @@ describe('equipment rules', () => {
       warrantyUntil: null,
       notes: null,
     })
-    const record = openMaintenance({
+    const record = await openMaintenance({
       equipmentId: created.id,
       type: 'corrective',
       openedOn: '2026-11-01',
@@ -246,7 +243,7 @@ describe('equipment rules', () => {
       costCents: null,
       serviceProvider: null,
     })
-    completeMaintenance(record.id, {
+    await completeMaintenance(record.id, {
       completedOn: '2026-11-02',
       solution: 'Beyond repair',
       costCents: null,
@@ -254,15 +251,14 @@ describe('equipment rules', () => {
       equipmentStatusAfter: 'written_off',
       writeOffReason: 'Scrap',
     })
-    const after = getEquipment(created.id)
+    const after = await getEquipment(created.id)
     expect(after.status).toBe('written_off')
     expect(after.writeOffReason).toBe('Scrap')
   })
 
-  test('registration rejects written-off status', () => {
-    const { category, sectorA } = setup()
-    expect(() =>
-      createEquipment({
+  test('registration rejects written-off status', async () => {
+    const { category, sectorA } = await setup()
+    await expect(createEquipment({
         assetTag: 'PAT-000001',
         name: 'PC 1',
         description: null,
@@ -281,12 +277,12 @@ describe('equipment rules', () => {
         warrantyUntil: null,
         notes: null,
       }),
-    ).toThrow(AppError)
+    ).rejects.toThrow(AppError)
   })
 
-  test('stock equipment can move to in use', () => {
-    const { category, sectorA } = setup()
-    const created = createEquipment({
+  test('stock equipment can move to in use', async () => {
+    const { category, sectorA } = await setup()
+    const created = await createEquipment({
       assetTag: 'PAT-000001',
       name: 'PC 1',
       description: null,
@@ -305,7 +301,7 @@ describe('equipment rules', () => {
       notes: null,
     })
 
-    const updated = updateEquipment(created.id, {
+    const updated = await updateEquipment(created.id, {
       assetTag: created.assetTag,
       name: created.name,
       description: null,
@@ -325,9 +321,8 @@ describe('equipment rules', () => {
     expect(updated.serialNumber).toBe('SN-1')
     expect(updated.supplier).toBe('Loja')
 
-    expect(markEquipmentInUse(updated.id).status).toBe('in_use')
-    expect(() =>
-      updateEquipment(updated.id, {
+    expect((await markEquipmentInUse(updated.id)).status).toBe('in_use')
+    await expect(updateEquipment(updated.id, {
         assetTag: updated.assetTag,
         name: updated.name,
         description: null,
@@ -343,7 +338,7 @@ describe('equipment rules', () => {
         notes: null,
         status: 'in_stock',
       }),
-    ).toThrow('Só é possível mudar o status de Em estoque para Em uso.')
+    ).rejects.toThrow('Só é possível mudar o status de Em estoque para Em uso.')
   })
 })
 

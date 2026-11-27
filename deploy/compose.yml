@@ -113,7 +113,11 @@ services:
       context: ../apps/chamados
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgres://chamados:${CHAMADOS_DB_PASSWORD}@postgres:5432/chamados
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: chamados
+      PGPASSWORD: ${CHAMADOS_DB_PASSWORD}
+      PGDATABASE: chamados
       SESSION_SECRET: ${SESSION_SECRET}
       AUTHENTIK_ISSUER: http://authentik:9000/authentik/application/o/chamados/
       AUTHENTIK_BROWSER_URL: http://${INTRANET_IP}
@@ -132,7 +136,11 @@ services:
       context: ../apps/patrimonio
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgres://patrimonio:${PATRIMONIO_DB_PASSWORD}@postgres:5432/patrimonio
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: patrimonio
+      PGPASSWORD: ${PATRIMONIO_DB_PASSWORD}
+      PGDATABASE: patrimonio
       SESSION_SECRET: ${SESSION_SECRET}
       AUTHENTIK_ISSUER: http://authentik:9000/authentik/application/o/patrimonio/
       AUTHENTIK_BROWSER_URL: http://${INTRANET_IP}

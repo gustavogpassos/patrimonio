@@ -35,7 +35,7 @@ import {
   openMaintenance,
 } from '@/db/maintenance'
 import { deleteSector, listSectors, saveSector } from '@/db/sectors'
-import { openPostgres } from '@/db/postgres'
+import { openPostgres, usesPostgres } from '@/db/postgres'
 import { getDb } from '@/db/sqlite'
 import { todayLocal } from '@/lib/dates'
 import type { EquipmentStatus } from '@/lib/types'
@@ -60,7 +60,7 @@ const DEFAULT_AUTHENTIK_ISSUER =
   'http://authentik:9000/authentik/application/o/patrimonio/'
 const DIST = join(process.cwd(), 'dist')
 
-if (process.env.DATABASE_URL && !process.env.PATRIMONIO_DB) {
+if (usesPostgres()) {
   await openPostgres(process.env.DATABASE_URL)
 } else {
   getDb()
@@ -243,55 +243,55 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
 
   try {
     if (path === '/api/dashboard' && method === 'GET') {
-      return json(dashboard())
+      return json(await dashboard())
     }
 
     if (path === '/api/sectors' && method === 'GET') {
-      return json(listSectors(boolParam(url.searchParams.get('includeInactive'))))
+      return json(await listSectors(boolParam(url.searchParams.get('includeInactive'))))
     }
     if (path === '/api/sectors' && method === 'POST') {
       const body = sectorSchema.parse(await parseJson(req))
-      return json(saveSector(body), 201)
+      return json(await saveSector(body), 201)
     }
     {
       const match = /^\/api\/sectors\/(\d+)$/.exec(path)
       if (match && method === 'PATCH') {
         const body = sectorSchema.parse(await parseJson(req))
-        return json(saveSector({ ...body, id: Number(match[1]) }))
+        return json(await saveSector({ ...body, id: Number(match[1]) }))
       }
       if (match && method === 'DELETE') {
-        deleteSector(Number(match[1]))
+        await deleteSector(Number(match[1]))
         return json({ ok: true })
       }
     }
 
     if (path === '/api/categories' && method === 'GET') {
-      return json(listCategories(boolParam(url.searchParams.get('includeInactive'))))
+      return json(await listCategories(boolParam(url.searchParams.get('includeInactive'))))
     }
     if (path === '/api/categories' && method === 'POST') {
       const body = categorySchema.parse(await parseJson(req))
-      return json(saveCategory(body), 201)
+      return json(await saveCategory(body), 201)
     }
     {
       const match = /^\/api\/categories\/(\d+)$/.exec(path)
       if (match && method === 'PATCH') {
         const body = categorySchema.parse(await parseJson(req))
-        return json(saveCategory({ ...body, id: Number(match[1]) }))
+        return json(await saveCategory({ ...body, id: Number(match[1]) }))
       }
       if (match && method === 'DELETE') {
-        deleteCategory(Number(match[1]))
+        await deleteCategory(Number(match[1]))
         return json({ ok: true })
       }
     }
 
     if (path === '/api/equipment/next-asset-tag' && method === 'GET') {
-      return json({ assetTag: nextAssetTag() })
+      return json({ assetTag: await nextAssetTag() })
     }
 
     if (path === '/api/equipment' && method === 'GET') {
       const status = url.searchParams.get('status') as EquipmentStatus | null
       return json(
-        listEquipment({
+        await listEquipment({
           q: url.searchParams.get('q') ?? undefined,
           categoryId: url.searchParams.get('categoryId')
             ? Number(url.searchParams.get('categoryId'))
@@ -314,17 +314,17 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
 
     if (path === '/api/equipment' && method === 'POST') {
       const body = createEquipmentSchema.parse(await parseJson(req))
-      return json(createEquipment(body), 201)
+      return json(await createEquipment(body), 201)
     }
 
     {
       const match = /^\/api\/equipment\/(\d+)$/.exec(path)
       if (match && method === 'GET') {
-        return json(getEquipment(Number(match[1])))
+        return json(await getEquipment(Number(match[1])))
       }
       if (match && method === 'PATCH') {
         const body = updateEquipmentSchema.parse(await parseJson(req))
-        return json(updateEquipment(Number(match[1]), body))
+        return json(await updateEquipment(Number(match[1]), body))
       }
     }
 
@@ -332,40 +332,40 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
       const match = /^\/api\/equipment\/(\d+)\/transfer$/.exec(path)
       if (match && method === 'POST') {
         const body = transferSchema.parse(await parseJson(req))
-        return json(transferEquipment(Number(match[1]), body))
+        return json(await transferEquipment(Number(match[1]), body))
       }
     }
     {
       const match = /^\/api\/equipment\/(\d+)\/write-off$/.exec(path)
       if (match && method === 'POST') {
         const body = writeOffSchema.parse(await parseJson(req))
-        return json(writeOffEquipment(Number(match[1]), body))
+        return json(await writeOffEquipment(Number(match[1]), body))
       }
     }
     {
       const match = /^\/api\/equipment\/(\d+)\/reactivate$/.exec(path)
       if (match && method === 'POST') {
-        return json(reactivateEquipment(Number(match[1])))
+        return json(await reactivateEquipment(Number(match[1])))
       }
     }
     {
       const match = /^\/api\/equipment\/(\d+)\/in-use$/.exec(path)
       if (match && method === 'POST') {
-        return json(markEquipmentInUse(Number(match[1])))
+        return json(await markEquipmentInUse(Number(match[1])))
       }
     }
     {
       const match = /^\/api\/equipment\/(\d+)\/delete$/.exec(path)
       if (match && method === 'POST') {
         const body = deleteEquipmentSchema.parse(await parseJson(req))
-        deleteEquipment(Number(match[1]), body.assetTagConfirmation)
+        await deleteEquipment(Number(match[1]), body.assetTagConfirmation)
         return json({ ok: true })
       }
     }
 
     if (path === '/api/maintenance' && method === 'GET') {
       return json(
-        listMaintenance({
+        await listMaintenance({
           state: (url.searchParams.get('state') as never) || undefined,
           type: (url.searchParams.get('type') as never) || undefined,
           equipmentId: url.searchParams.get('equipmentId')
@@ -384,20 +384,20 @@ async function handleApi(req: Request, url: URL): Promise<Response> {
 
     if (path === '/api/maintenance' && method === 'POST') {
       const body = openMaintenanceSchema.parse(await parseJson(req))
-      return json(openMaintenance(body), 201)
+      return json(await openMaintenance(body), 201)
     }
     {
       const match = /^\/api\/maintenance\/(\d+)\/complete$/.exec(path)
       if (match && method === 'POST') {
         const body = completeMaintenanceSchema.parse(await parseJson(req))
-        return json(completeMaintenance(Number(match[1]), body))
+        return json(await completeMaintenance(Number(match[1]), body))
       }
     }
     {
       const match = /^\/api\/maintenance\/(\d+)\/cancel$/.exec(path)
       if (match && method === 'POST') {
         const body = cancelMaintenanceSchema.parse(await parseJson(req))
-        return json(cancelMaintenance(Number(match[1]), body))
+        return json(await cancelMaintenance(Number(match[1]), body))
       }
     }
 

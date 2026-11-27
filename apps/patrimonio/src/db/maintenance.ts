@@ -13,7 +13,8 @@ import type {
 } from '@/lib/types'
 import { AppError, wrapDb } from './errors'
 import { getEquipment } from './equipment'
-import { getDb, nullIfEmpty } from './sqlite'
+import { all, get, run, transaction } from './sql'
+import { nullIfEmpty } from './sqlite'
 
 type Row = {
   id: number
@@ -66,11 +67,10 @@ export type ListMaintenanceParams = {
   pageSize?: number
 }
 
-export function listMaintenance(
+export async function listMaintenance(
   params: ListMaintenanceParams = {},
-): Paginated<Maintenance> {
-  return wrapDb(() => {
-    const db = getDb()
+): Promise<Paginated<Maintenance>> {
+  return wrapDb(async () => {
     const page = Math.max(1, params.page ?? 1)
     const pageSize = Math.min(Math.max(params.pageSize ?? 20, 1), 10_000)
     const offset = (page - 1) * pageSize
@@ -97,53 +97,53 @@ export function listMaintenance(
     }
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
-    const total =
-      db
-        .query<{ c: number }, Array<string | number>>(
+    const total = Number(
+      (
+        await get<{ c: number }>(
           `SELECT COUNT(*) AS c
            FROM maintenance m
            JOIN equipment e ON e.id = m.equipment_id
            ${whereSql}`,
+          ...args,
         )
-        .get(...args)?.c ?? 0
+      )?.c ?? 0,
+    )
 
-    const rows = db
-      .query<Row, Array<string | number>>(
-        `SELECT m.*,
-          e.name AS equipment_name,
-          e.asset_tag AS equipment_asset_tag
-         FROM maintenance m
-         JOIN equipment e ON e.id = m.equipment_id
-         ${whereSql}
-         ORDER BY m.opened_on DESC, m.id DESC
-         LIMIT ? OFFSET ?`,
-      )
-      .all(...args, pageSize, offset)
-
-    return { items: rows.map(mapRow), total }
-  })
-}
-
-function getMaintenance(id: number): Maintenance {
-  const db = getDb()
-  const row = db
-    .query<Row, [number]>(
+    const rows = await all<Row>(
       `SELECT m.*,
         e.name AS equipment_name,
         e.asset_tag AS equipment_asset_tag
        FROM maintenance m
        JOIN equipment e ON e.id = m.equipment_id
-       WHERE m.id = ?`,
+       ${whereSql}
+       ORDER BY m.opened_on DESC, m.id DESC
+       LIMIT ? OFFSET ?`,
+      ...args,
+      pageSize,
+      offset,
     )
-    .get(id)
+
+    return { items: rows.map(mapRow), total }
+  })
+}
+
+async function getMaintenance(id: number): Promise<Maintenance> {
+  const row = await get<Row>(
+    `SELECT m.*,
+      e.name AS equipment_name,
+      e.asset_tag AS equipment_asset_tag
+     FROM maintenance m
+     JOIN equipment e ON e.id = m.equipment_id
+     WHERE m.id = ?`,
+    id,
+  )
   if (!row) throw new AppError('Manutenção não encontrada.')
   return mapRow(row)
 }
 
-export function openMaintenance(input: OpenMaintenanceInput): Maintenance {
-  return wrapDb(() => {
-    const db = getDb()
-    const equipment = getEquipment(input.equipmentId)
+export async function openMaintenance(input: OpenMaintenanceInput): Promise<Maintenance> {
+  return wrapDb(async () => {
+    const equipment = await getEquipment(input.equipmentId)
     if (equipment.status === 'written_off') {
       throw new AppError('Equipamento baixado não pode abrir manutenção.')
     }
@@ -154,43 +154,40 @@ export function openMaintenance(input: OpenMaintenanceInput): Maintenance {
       throw new AppError('Data de abertura não pode ser futura.')
     }
 
-    const tx = db.transaction(() => {
-      const result = db
-        .query(
-          `INSERT INTO maintenance (
+    const id = await transaction(async () => {
+      const result = await run(
+        `INSERT INTO maintenance (
             equipment_id, type, state, opened_on, problem,
             cost_cents, service_provider, previous_status,
             created_at, updated_at
           ) VALUES (?, ?, 'open', ?, ?, ?, ?, ?, datetime('now','localtime'), datetime('now','localtime'))`,
-        )
-        .run(
-          input.equipmentId,
-          input.type,
-          input.openedOn,
-          input.problem.trim(),
-          input.costCents ?? null,
-          nullIfEmpty(input.serviceProvider),
-          equipment.status,
-        )
-      db.query(
+        input.equipmentId,
+        input.type,
+        input.openedOn,
+        input.problem.trim(),
+        input.costCents ?? null,
+        nullIfEmpty(input.serviceProvider),
+        equipment.status,
+      )
+      await run(
         `UPDATE equipment
          SET status = 'in_maintenance', updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(input.equipmentId)
+        input.equipmentId,
+      )
       return Number(result.lastInsertRowid)
     })
 
-    return getMaintenance(tx())
+    return getMaintenance(id)
   })
 }
 
-export function completeMaintenance(
+export async function completeMaintenance(
   id: number,
   input: CompleteMaintenanceInput,
-): Maintenance {
-  return wrapDb(() => {
-    const db = getDb()
-    const record = getMaintenance(id)
+): Promise<Maintenance> {
+  return wrapDb(async () => {
+    const record = await getMaintenance(id)
     if (record.state !== 'open') {
       throw new AppError('Somente manutenções abertas podem ser concluídas.')
     }
@@ -210,8 +207,8 @@ export function completeMaintenance(
       writeOffReason = reason
     }
 
-    const tx = db.transaction(() => {
-      db.query(
+    await transaction(async () => {
+      await run(
         `UPDATE maintenance SET
           state = 'completed',
           completed_on = ?,
@@ -221,7 +218,6 @@ export function completeMaintenance(
           equipment_status_after = ?,
           updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(
         input.completedOn,
         input.solution.trim(),
         input.costCents ?? null,
@@ -231,35 +227,38 @@ export function completeMaintenance(
       )
 
       if (input.equipmentStatusAfter === 'written_off') {
-        db.query(
+        await run(
           `UPDATE equipment SET
             status = 'written_off',
             write_off_reason = ?,
             written_off_on = ?,
             updated_at = datetime('now','localtime')
            WHERE id = ?`,
-        ).run(writeOffReason, input.completedOn, record.equipmentId)
+          writeOffReason,
+          input.completedOn,
+          record.equipmentId,
+        )
       } else {
-        db.query(
+        await run(
           `UPDATE equipment SET
             status = ?,
             updated_at = datetime('now','localtime')
            WHERE id = ?`,
-        ).run(input.equipmentStatusAfter, record.equipmentId)
+          input.equipmentStatusAfter,
+          record.equipmentId,
+        )
       }
     })
-    tx()
     return getMaintenance(id)
   })
 }
 
-export function cancelMaintenance(
+export async function cancelMaintenance(
   id: number,
   input: CancelMaintenanceInput,
-): Maintenance {
-  return wrapDb(() => {
-    const db = getDb()
-    const record = getMaintenance(id)
+): Promise<Maintenance> {
+  return wrapDb(async () => {
+    const record = await getMaintenance(id)
     if (record.state !== 'open') {
       throw new AppError('Somente manutenções abertas podem ser canceladas.')
     }
@@ -267,22 +266,25 @@ export function cancelMaintenance(
     const restoredStatus =
       record.previousStatus === 'in_maintenance' ? 'in_use' : record.previousStatus
 
-    const tx = db.transaction(() => {
-      db.query(
+    await transaction(async () => {
+      await run(
         `UPDATE maintenance SET
           state = 'cancelled',
           cancellation_reason = ?,
           updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(input.cancellationReason.trim(), id)
-      db.query(
+        input.cancellationReason.trim(),
+        id,
+      )
+      await run(
         `UPDATE equipment SET
           status = ?,
           updated_at = datetime('now','localtime')
          WHERE id = ?`,
-      ).run(restoredStatus, record.equipmentId)
+        restoredStatus,
+        record.equipmentId,
+      )
     })
-    tx()
     return getMaintenance(id)
   })
 }

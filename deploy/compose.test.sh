@@ -125,8 +125,8 @@ if postgres_publishes_port "${chamados_block}"; then
   exit 1
 fi
 
-if ! echo "${chamados_block}" | grep -q 'postgres://chamados'; then
-  echo "FAIL: chamados service missing postgres://chamados DATABASE_URL"
+if ! echo "${chamados_block}" | grep -q 'PGDATABASE: chamados'; then
+  echo "FAIL: chamados service missing PGDATABASE: chamados"
   exit 1
 fi
 
@@ -146,8 +146,8 @@ if postgres_publishes_port "${patrimonio_block}"; then
   exit 1
 fi
 
-if ! echo "${patrimonio_block}" | grep -q 'postgres://patrimonio'; then
-  echo "FAIL: patrimonio service missing postgres://patrimonio DATABASE_URL"
+if ! echo "${patrimonio_block}" | grep -q 'PGDATABASE: patrimonio'; then
+  echo "FAIL: patrimonio service missing PGDATABASE: patrimonio"
   exit 1
 fi
 
