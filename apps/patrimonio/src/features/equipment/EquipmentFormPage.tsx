@@ -15,13 +15,16 @@ import { formatBRLPlain, parseBRLToCents } from '@/lib/money'
 import { useShortcut } from '@/lib/shortcuts'
 import type { Category, EquipmentStatus, Sector } from '@/lib/types'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { equipmentListPath, equipmentListSearch } from './navigation'
 
 export function EquipmentFormPage() {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
+  const routeLocation = useLocation()
+  const listSearch = equipmentListSearch(routeLocation.state)
 
   const [categories, setCategories] = useState<Category[]>([])
   const [sectors, setSectors] = useState<Sector[]>([])
@@ -127,7 +130,7 @@ export function EquipmentFormPage() {
           ...(recordStatus === 'in_stock' ? { status } : {}),
         })
         toast.success('Equipamento atualizado')
-        navigate(`/equipment/${updated.id}`)
+        navigate(`/equipment/${updated.id}`, { state: { listSearch } })
       } else {
         const created = await api.createEquipment({
           assetTag,
@@ -148,7 +151,7 @@ export function EquipmentFormPage() {
           notes,
         })
         toast.success('Equipamento cadastrado')
-        navigate(`/equipment/${created.id}`)
+        navigate(`/equipment/${created.id}`, { state: { created: true, listSearch } })
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro')
@@ -273,7 +276,10 @@ export function EquipmentFormPage() {
           <ShortcutHint keys="Ctrl S" />
         </Button>
         <Button variant="outline" asChild>
-          <Link to={isEdit && id ? `/equipment/${id}` : '/equipment'}>
+          <Link
+            to={isEdit && id ? `/equipment/${id}` : equipmentListPath(routeLocation.state)}
+            state={isEdit && id ? { listSearch } : undefined}
+          >
             Cancelar
           </Link>
         </Button>

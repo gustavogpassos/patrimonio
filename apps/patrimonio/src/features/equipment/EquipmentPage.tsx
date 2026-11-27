@@ -48,7 +48,14 @@ export function EquipmentPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const rowRefs = useRef<Array<HTMLTableRowElement | null>>([])
 
-  useShortcut('n', () => navigate('/equipment/new'), { allowInField: true, alt: true })
+  function listState() {
+    return { listSearch: params.toString() }
+  }
+
+  useShortcut('n', () => navigate('/equipment/new', { state: listState() }), {
+    allowInField: true,
+    alt: true,
+  })
 
   const q = params.get('q') ?? ''
   const categoryId = params.get('categoryId')
@@ -135,7 +142,7 @@ export function EquipmentPage() {
       rowRefs.current[items.length - 1]?.focus()
     } else if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      navigate(`/equipment/${items[index]?.id}`)
+      navigate(`/equipment/${items[index]?.id}`, { state: listState() })
     }
   }
 
@@ -183,7 +190,7 @@ export function EquipmentPage() {
             Exportar CSV
           </Button>
           <Button asChild>
-            <Link to="/equipment/new" aria-keyshortcuts="Alt+N">
+            <Link to="/equipment/new" state={listState()} aria-keyshortcuts="Alt+N">
               Novo equipamento
               <ShortcutHint keys="Alt N" />
             </Link>
@@ -256,7 +263,7 @@ export function EquipmentPage() {
           action={
             !hasFilters ? (
               <Button asChild>
-                <Link to="/equipment/new" aria-keyshortcuts="Alt+N">
+                <Link to="/equipment/new" state={listState()} aria-keyshortcuts="Alt+N">
                   Novo equipamento
                   <ShortcutHint keys="Alt N" />
                 </Link>
@@ -289,7 +296,7 @@ export function EquipmentPage() {
                   tabIndex={0}
                   className="group cursor-pointer focus-visible:bg-muted focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
                   aria-label={`Abrir ${item.name}`}
-                  onClick={() => navigate(`/equipment/${item.id}`)}
+                  onClick={() => navigate(`/equipment/${item.id}`, { state: listState() })}
                   onKeyDown={(event) => onRowKeyDown(event, index)}
                 >
                   <TableCell className="font-medium">{item.assetTag}</TableCell>
@@ -342,13 +349,15 @@ export function EquipmentPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="min-h-11 lg:min-h-0"
-                          onClick={() => navigate(`/equipment/${item.id}`)}
+                          onClick={() => navigate(`/equipment/${item.id}`, { state: listState() })}
                         >
                           Abrir
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="min-h-11 lg:min-h-0"
-                          onClick={() => navigate(`/equipment/${item.id}/edit`)}
+                          onClick={() =>
+                            navigate(`/equipment/${item.id}/edit`, { state: listState() })
+                          }
                         >
                           Editar
                         </DropdownMenuItem>
