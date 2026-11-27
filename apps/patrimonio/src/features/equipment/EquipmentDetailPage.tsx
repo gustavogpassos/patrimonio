@@ -1,4 +1,5 @@
 import { RegularMaintenanceBadge } from '@/components/RegularMaintenanceBadge'
+import { ShortcutHint } from '@/components/ShortcutHint'
 import { MaintenanceStateBadge, StatusBadge } from '@/components/StatusBadge'
 import { WarrantyBadge } from '@/components/WarrantyBadge'
 import { Badge } from '@/components/ui/badge'
@@ -20,19 +21,25 @@ import {
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/dates'
 import { formatBRL } from '@/lib/money'
+import { useShortcut } from '@/lib/shortcuts'
 import type { EquipmentDetail, Maintenance } from '@/lib/types'
 import { MAINTENANCE_TYPE_LABELS } from '@/lib/types'
 import { ArrowLeft } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { DeleteDialog } from './DeleteDialog'
+import { equipmentListPath, equipmentListSearch, wasJustCreated } from './navigation'
 import { TransferDialog } from './TransferDialog'
 import { WriteOffDialog } from './WriteOffDialog'
 
 export function EquipmentDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const justCreated = wasJustCreated(location.state)
+  const listPath = equipmentListPath(location.state)
+  const listSearch = equipmentListSearch(location.state)
   const [equipment, setEquipment] = useState<EquipmentDetail | null>(null)
   const [transferOpen, setTransferOpen] = useState(false)
   const [writeOffOpen, setWriteOffOpen] = useState(false)
@@ -40,6 +47,20 @@ export function EquipmentDetailPage() {
   const [openMaintenance, setOpenMaintenance] = useState(false)
   const [completeTarget, setCompleteTarget] = useState<Maintenance | null>(null)
   const [cancelTarget, setCancelTarget] = useState<Maintenance | null>(null)
+  const dialogOpen =
+    transferOpen ||
+    writeOffOpen ||
+    deleteOpen ||
+    openMaintenance ||
+    completeTarget != null ||
+    cancelTarget != null
+
+  useShortcut('v', () => navigate(listPath), { alt: true, enabled: !dialogOpen })
+  useShortcut('n', () => navigate('/equipment/new', { state: { listSearch } }), {
+    alt: true,
+    allowInField: true,
+    enabled: justCreated && !dialogOpen,
+  })
 
   async function load() {
     if (!id) return
@@ -85,9 +106,10 @@ export function EquipmentDetailPage() {
   return (
     <div className="space-y-6">
       <Button variant="outline" className="w-fit" asChild>
-        <Link to="/equipment">
+        <Link to={listPath} aria-keyshortcuts="Alt+V">
           <ArrowLeft />
           Voltar para a lista
+          <ShortcutHint keys="Alt V" />
         </Link>
       </Button>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -99,11 +121,21 @@ export function EquipmentDetailPage() {
           <p className="text-muted-foreground">{equipment.assetTag}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {justCreated && (
+            <Button asChild>
+              <Link to="/equipment/new" state={{ listSearch }} aria-keyshortcuts="Alt+N">
+                Continuar adicionando
+                <ShortcutHint keys="Alt N" />
+              </Link>
+            </Button>
+          )}
           {equipment.status === 'in_stock' && (
             <Button onClick={() => void putInUse()}>Colocar em uso</Button>
           )}
           <Button variant="outline" asChild>
-            <Link to={`/equipment/${equipment.id}/edit`}>Editar</Link>
+            <Link to={`/equipment/${equipment.id}/edit`} state={{ listSearch }}>
+              Editar
+            </Link>
           </Button>
           {!writtenOff && (
             <>
@@ -287,7 +319,7 @@ export function EquipmentDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         equipment={equipment}
-        onDone={() => navigate('/equipment')}
+        onDone={() => navigate(listPath)}
       />
       <OpenMaintenanceDialog
         open={openMaintenance}
