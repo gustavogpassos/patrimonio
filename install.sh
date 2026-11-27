@@ -37,6 +37,9 @@ ensure_git() {
 if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
   root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if [[ -f "$root/apps/patrimonio/install.sh" ]]; then
+    if [[ -n "${PATRIMONIO_INSTALL_TARGET:-}" ]]; then
+      exec bash "$PATRIMONIO_INSTALL_TARGET"
+    fi
     exec bash "$root/apps/patrimonio/install.sh"
   fi
 fi

@@ -103,6 +103,23 @@ db_fingerprint() {
   fi
 }
 
+adopt_legacy_database() {
+  local app="$1"
+  local new="$app/data/patrimonio.db"
+  [[ -f "$new" ]] && return 0
+  local repo
+  repo="$(git -C "$app" rev-parse --show-toplevel 2>/dev/null || true)"
+  [[ -n "$repo" ]] || return 0
+  local old="$repo/data/patrimonio.db"
+  [[ -f "$old" ]] || return 0
+  [[ "$old" == "$new" ]] && return 0
+  mkdir -p "$app/data"
+  cp -a "$old" "$new"
+  [[ -f "${old}-wal" ]] && cp -a "${old}-wal" "${new}-wal"
+  [[ -f "${old}-shm" ]] && cp -a "${old}-shm" "${new}-shm"
+  log "Banco antigo copiado de ${old} para ${new}. O arquivo antigo permanece."
+}
+
 ensure_service_user() {
   local dir="$1"
   if [[ "$(id -u)" -ne 0 ]]; then
@@ -361,6 +378,8 @@ main() {
   after="$(db_fingerprint "$dir")"
   [[ "$before" == "$after" ]] || die "A troca de versão alterou ${dir}/data/patrimonio.db. A instalação parou antes de mexer no serviço."
 
+  adopt_legacy_database "$dir"
+
   if [[ "${PATRIMONIO_INNER:-}" != 1 ]]; then
     export PATRIMONIO_INNER=1
     export PATRIMONIO_DIR="$dir"
@@ -412,4 +431,8 @@ main() {
   fi
 }
 
-main "$@"
+if [[ "${PATRIMONIO_TEST_ADOPT:-}" == 1 ]]; then
+  adopt_legacy_database "$1"
+else
+  main "$@"
+fi

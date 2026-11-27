@@ -50,6 +50,8 @@ bun run dev
 
 ## Dados
 
+Numa instalação antiga, em que o banco estava em `data/patrimonio.db` na raiz do clone, o `install.sh` copia esse arquivo para `apps/patrimonio/data/` se o destino ainda não existir. O arquivo antigo permanece.
+
 - Banco: `data/patrimonio.db` (criado na primeira execução)
 - Backup e restauração: botões no rodapé da barra lateral
 
