@@ -34,6 +34,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = path.startsWith('/api/') ? `${BASE_PATH}${path}` : path
   const res = await fetch(url, init)
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== 'undefined') {
+      let next = '/'
+      const { pathname, search } = window.location
+      if (pathname.startsWith(BASE_PATH)) {
+        const rest = pathname.slice(BASE_PATH.length)
+        next = (rest.length === 0 ? '/' : rest) + search
+      }
+      window.location.assign(
+        `${BASE_PATH}/api/auth/login?next=${encodeURIComponent(next)}`,
+      )
+    }
     let message = 'Não foi possível concluir a operação.'
     try {
       const body = (await res.json()) as { error?: string }
