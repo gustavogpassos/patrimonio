@@ -8,12 +8,23 @@ import { closePostgres, openPostgres } from './postgres'
 
 const databaseUrl = process.env.DATABASE_URL
 
+async function resetPostgres(url: string) {
+  const pg = await openPostgres(url)
+  await pg`DELETE FROM maintenance`
+  await pg`DELETE FROM transfers`
+  await pg`DELETE FROM equipment`
+  await pg`DELETE FROM sectors`
+  await pg`DELETE FROM categories`
+  return pg
+}
+
 if (!databaseUrl) {
   test.skip('Postgres ausente: defina DATABASE_URL', () => {})
 } else {
   const dir = join(process.cwd(), 'data', 'import-sqlite-test')
 
   afterAll(async () => {
+    await resetPostgres(databaseUrl)
     await closePostgres()
     rmSync(dir, { recursive: true, force: true })
   })
@@ -53,6 +64,8 @@ if (!databaseUrl) {
         .run()
       writer.close()
 
+      const pg = await resetPostgres(databaseUrl)
+
       const first = await importSqlite(path, databaseUrl)
       expect(first).toEqual({
         categories: 1,
@@ -62,7 +75,6 @@ if (!databaseUrl) {
         maintenance: 0,
       })
 
-      const pg = await openPostgres(databaseUrl)
       const eqRows = await pg`SELECT id FROM equipment WHERE id = 7`
       const catRows = await pg`SELECT id FROM categories WHERE id = 4`
       const secRows = await pg`SELECT id FROM sectors WHERE id = 2`

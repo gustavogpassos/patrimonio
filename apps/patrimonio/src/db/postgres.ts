@@ -19,18 +19,11 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 `)
 }
 
-async function runMigrationFile(sql: SQL, text: string) {
-  try {
-    await sql.unsafe(text)
-  } catch {
-    const pieces = text.split(';\n')
-    for (const piece of pieces) {
-      const trimmed = piece.trim()
-      if (trimmed.length > 0) {
-        await sql.unsafe(trimmed)
-      }
-    }
-  }
+function migrationStatements(text: string): string[] {
+  return text
+    .split(';\n')
+    .map((piece) => piece.trim())
+    .filter((piece) => piece.length > 0)
 }
 
 async function applyMigrations(sql: SQL) {
@@ -53,9 +46,14 @@ async function applyMigrations(sql: SQL) {
     if (!version || applied.has(version)) continue
 
     const text = readFileSync(join(dir, file), 'utf8')
-    await runMigrationFile(sql, text)
     const description = migrationDescription(version)
-    await sql`INSERT INTO schema_migrations (version, description, applied_at) VALUES (${version}, ${description}, to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))`
+    const statements = migrationStatements(text)
+    await sql.begin(async (tx) => {
+      for (const statement of statements) {
+        await tx.unsafe(statement)
+      }
+      await tx`INSERT INTO schema_migrations (version, description, applied_at) VALUES (${version}, ${description}, to_char(now(), 'YYYY-MM-DD HH24:MI:SS'))`
+    })
   }
 }
 
