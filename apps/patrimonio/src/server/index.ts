@@ -35,6 +35,7 @@ import {
   openMaintenance,
 } from '@/db/maintenance'
 import { deleteSector, listSectors, saveSector } from '@/db/sectors'
+import { openPostgres } from '@/db/postgres'
 import { getDb } from '@/db/sqlite'
 import { todayLocal } from '@/lib/dates'
 import type { EquipmentStatus } from '@/lib/types'
@@ -59,7 +60,11 @@ const DEFAULT_AUTHENTIK_ISSUER =
   'http://authentik:9000/authentik/application/o/patrimonio/'
 const DIST = join(process.cwd(), 'dist')
 
-getDb()
+if (process.env.DATABASE_URL && !process.env.PATRIMONIO_DB) {
+  await openPostgres(process.env.DATABASE_URL)
+} else {
+  getDb()
+}
 
 function stripBase(pathname: string): string | null {
   if (pathname === BASE_PATH || pathname.startsWith(`${BASE_PATH}/`)) {

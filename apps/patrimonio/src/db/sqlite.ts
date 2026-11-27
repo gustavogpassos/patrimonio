@@ -21,6 +21,15 @@ function configure(connection: Database) {
 }
 
 export function openDatabase(path = dbPath): Database {
+  const defaultPath = join(process.cwd(), 'data', 'patrimonio.db')
+  if (
+    process.env.DATABASE_URL &&
+    process.env.DATABASE_URL.length > 0 &&
+    (!process.env.PATRIMONIO_DB || process.env.PATRIMONIO_DB.length === 0) &&
+    path === defaultPath
+  ) {
+    throw new Error('Com DATABASE_URL o patrimônio não abre SQLite.')
+  }
   mkdirSync(dirname(path), { recursive: true })
   const connection = new Database(path, { create: true })
   configure(connection)
